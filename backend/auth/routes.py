@@ -2,10 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
+from sqlalchemy import select 
 
 from core.database import SessionLocal
+from core.security import verify_password, create_access_token
 from auth.models import User
-from auth.schemas import UserCreate, UserResponse
+from auth.schemas import UserCreate, UserResponse, LoginRequest, TokenResponse
+
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -51,3 +54,41 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create user"
         )
+    
+
+@router.post("/login", response_model=TokenResponse)
+def login(user: LoginRequest, db: Session = Depends(get_db)):
+    db_user = db.execute(
+        select(User).where(User.email == user.email)   
+    ).scalar_one_or_none()
+
+    #do not reveal which field is wrong 
+    if not db_user or not verify_password(user.password, db_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+
+    if not db_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive"
+        )
+    
+    try:
+        access_token = create_access_token(
+            data={
+                "sub": str(db_user.id),
+                "role": db_user.role
+            }
+        )
+    except RuntimeError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate access token"
+        )
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
