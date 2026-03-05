@@ -8,7 +8,7 @@ from core.dependencies import get_current_user
 from datasets.models import Dataset
 from datasets.services import load_dataset
 
-from analytics.services import generate_profile, generate_insights
+from analytics.services import generate_profile, generate_insights, generate_forecast
 
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -78,4 +78,34 @@ def dataset_insights(
         raise HTTPException(
             status_code=500,
             detail="Failed to generate insights"
+        )
+    
+
+@router.get("/{dataset_id}/forecast")
+def dataset_forecast(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+
+):
+    dataset = db.execute(
+        select(Dataset).where(Dataset.id == dataset_id)
+    ).scalar_one_or_none() 
+
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    
+    try: 
+        df = load_dataset(dataset.file_path) 
+
+        forecast = generate_forecast(df) 
+        return {
+            "dataset_id": dataset_id,
+            "forecast": forecast
+        } 
+    
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
         )

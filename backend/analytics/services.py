@@ -1,4 +1,6 @@
-import pandas as pd
+import pandas as pd 
+import numpy as np 
+
 
 #generate a profile of the dataset with basic stats and correlations
 def generate_profile(df: pd.DataFrame):
@@ -96,4 +98,39 @@ def generate_insights(df):
             f"Most frequent value in '{col}' is '{top_value}'."
         )
 
-    return insights
+    return insights 
+
+
+def generate_forecast(df, steps: int = 5):
+
+    numeric_df = df.select_dtypes(include=["number"])
+
+    if numeric_df.empty:
+        raise RuntimeError("No numeric column available for forecasting")
+
+    # Select first numeric column
+    target_col = numeric_df.columns[0]
+
+    series = numeric_df[target_col].dropna()
+
+    if len(series) < 5:
+        raise RuntimeError("Not enough data for forecasting")
+
+    # Simple trend calculation
+    trend = np.polyfit(range(len(series)), series, 1)
+
+    predictions = []
+
+    for i in range(steps):
+        next_index = len(series) + i
+        predicted_value = trend[0] * next_index + trend[1]
+
+        predictions.append({
+            "step": i + 1,
+            "predicted_value": round(float(predicted_value), 2)
+        })
+
+    return {
+        "target_column": target_col,
+        "forecast": predictions
+    }
