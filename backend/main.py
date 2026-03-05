@@ -8,6 +8,7 @@ from core.exceptions import global_exception_handler
 from auth.models import User
 from auth.routes import router as user_router
 
+from datasets.routes import router as dataset_router
 
 app = FastAPI(
     title="Unified Data Intelligence & Forecasting Platform",
@@ -21,7 +22,7 @@ Base.metadata.create_all(bind=engine)
 
 # Register routers
 app.include_router(user_router)
-
+app.include_router(dataset_router)
 
 # Global exception handler
 @app.exception_handler(Exception)
