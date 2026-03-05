@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
 from sqlalchemy import select 
-
+from fastapi.security import OAuth2PasswordRequestForm
 from core.database import SessionLocal
 from core.security import verify_password, create_access_token
 from auth.models import User
@@ -55,15 +55,17 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
             detail="Failed to create user"
         )
     
-
+    
 @router.post("/login", response_model=TokenResponse)
-def login(user: LoginRequest, db: Session = Depends(get_db)):
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
     db_user = db.execute(
-        select(User).where(User.email == user.email)   
+        select(User).where(User.email == form_data.username)
     ).scalar_one_or_none()
 
-    #do not reveal which field is wrong 
-    if not db_user or not verify_password(user.password, db_user.hashed_password):
+    if not db_user or not verify_password(form_data.password, db_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
@@ -74,7 +76,7 @@ def login(user: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive"
         )
-    
+
     try:
         access_token = create_access_token(
             data={
@@ -87,7 +89,7 @@ def login(user: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate access token"
         )
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer"
