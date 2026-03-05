@@ -1,14 +1,14 @@
 import os
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
+from sqlalchemy import select
 from core.database import SessionLocal
 from core.dependencies import get_current_user
 from auth.models import User
 
 from datasets.models import Dataset
 from datasets.schemas import DatasetResponse
-from datasets.services import load_dataset, dataset_summary
+from datasets.services import load_dataset, dataset_summary,dataset_preview
 
 
 router = APIRouter(prefix="/datasets", tags=["Datasets"])
@@ -70,4 +70,28 @@ async def upload_dataset(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Dataset processing failed"
+        )
+    
+@router.get("/{dataset_id}/preview")
+def preview_dataset(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    dataset = db.execute(
+        select(Dataset).where(Dataset.id == dataset_id)
+    ).scalar_one_or_none()
+
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    
+    try:
+        df = load_dataset(dataset.file_path)
+        preview = dataset_preview(df)
+        return preview 
+    
+    except RuntimeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate dataset preview"
         )

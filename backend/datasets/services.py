@@ -23,3 +23,17 @@ def dataset_summary(df):
         "rows": df.shape[0],
         "columns": df.shape[1]
     }
+
+
+def dataset_preview(df, rows: int = 10):
+    try:
+        preview = df.head(rows)
+
+        return {
+            "columns": list(preview.columns),
+            "dtypes": {col: str(dtype) for col, dtype in preview.dtypes.items()},
+            "rows": preview.to_dict(orient="records")
+        }
+
+    except Exception as e:
+        raise RuntimeError("Failed to generate dataset preview") from e
