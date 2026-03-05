@@ -1,22 +1,22 @@
 import pandas as pd
 
-
+#generate a profile of the dataset with basic stats and correlations
 def generate_profile(df: pd.DataFrame):
 
     profile = {}
 
-    profile["rows"] = df.shape[0]
-    profile["columns"] = df.shape[1]
+    profile["rows"] = df.shape[0]  # number of rows
+    profile["columns"] = df.shape[1]   # number of columns
 
     profile["column_types"] = {
-        col: str(dtype) for col, dtype in df.dtypes.items()
+        col: str(dtype) for col, dtype in df.dtypes.items()   # data types of each column
     }
 
-    profile["missing_values"] = df.isnull().sum().to_dict()
+    profile["missing_values"] = df.isnull().sum().to_dict()   # count of missing values per column
 
-    numeric_df = df.select_dtypes(include=["number"])
+    numeric_df = df.select_dtypes(include=["number"])     # subset of numeric columns for stats and correlations
 
-    if not numeric_df.empty:
+    if not numeric_df.empty:                             # if there are numeric columns, calculate stats and correlations
         stats = numeric_df.describe().to_dict()
 
         profile["numeric_summary"] = {
@@ -35,3 +35,65 @@ def generate_profile(df: pd.DataFrame):
         profile["correlation_matrix"] = {}
 
     return profile
+
+
+def generate_insights(df):
+
+    insights = []
+
+    # Missing values
+    missing = df.isnull().sum()
+
+    for col, count in missing.items():
+        if count > 0:
+            insights.append(f"Column '{col}' contains {count} missing values.")
+
+    # Cardinality insights
+    for col in df.columns:
+        unique_count = df[col].nunique()
+        if unique_count > 50:
+            insights.append(
+                f"Column '{col}' has high cardinality with {unique_count} unique values."
+            )
+
+    # Numeric insights
+    numeric_df = df.select_dtypes(include=["number"])
+
+    if not numeric_df.empty:
+
+        means = numeric_df.mean()
+        top_col = means.idxmax()
+
+        insights.append(
+            f"Column '{top_col}' has the highest average value ({means[top_col]:.2f})."
+        )
+
+        for col in numeric_df.columns:
+            col_min = numeric_df[col].min()
+            col_max = numeric_df[col].max()
+
+            insights.append(
+                f"Column '{col}' ranges from {col_min} to {col_max}."
+            )
+
+        # Correlation insight
+        corr = numeric_df.corr()
+
+        for col in corr.columns:
+            for row in corr.index:
+                if col != row and abs(corr.loc[row, col]) > 0.8:
+                    insights.append(
+                        f"Strong correlation detected between '{row}' and '{col}'."
+                    )
+
+    # Categorical insights
+    categorical = df.select_dtypes(include=["object"])
+
+    for col in categorical.columns:
+        top_value = df[col].value_counts().idxmax()
+
+        insights.append(
+            f"Most frequent value in '{col}' is '{top_value}'."
+        )
+
+    return insights
