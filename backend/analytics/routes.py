@@ -8,7 +8,7 @@ from core.dependencies import get_current_user
 from datasets.models import Dataset
 from datasets.services import load_dataset
 
-from analytics.services import generate_profile, generate_insights, generate_forecast
+from analytics.services import generate_profile, generate_insights, generate_forecast, clean_dataset
 
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -108,4 +108,37 @@ def dataset_forecast(
         raise HTTPException(
             status_code=400,
             detail=str(e)
+        ) 
+    
+
+@router.post("/{dataset_id}/clean")
+def clean_dataset_api(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    dataset = db.execute(
+        select(Dataset).where(Dataset.id == dataset_id)
+    ).scalar_one_or_none()
+
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    try:
+        df = load_dataset(dataset.file_path)
+
+        cleaned_df, report = clean_dataset(df)
+
+        cleaned_df.to_csv(dataset.file_path, index=False)
+
+        return {
+            "dataset_id": dataset_id,
+            "cleaning_report": report
+        }
+
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to clean dataset"
         )

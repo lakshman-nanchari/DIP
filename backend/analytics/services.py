@@ -133,4 +133,33 @@ def generate_forecast(df, steps: int = 5):
     return {
         "target_column": target_col,
         "forecast": predictions
-    }
+    } 
+
+def clean_dataset(df):
+
+    report = {}
+
+    # Remove duplicates
+    before = len(df)
+    df = df.drop_duplicates()
+    after = len(df)
+
+    report["duplicates_removed"] = before - after
+
+    # Fill numeric missing values
+    numeric_cols = df.select_dtypes(include=["number"]).columns
+
+    for col in numeric_cols:
+        if df[col].isnull().sum() > 0:
+            df[col] = df[col].fillna(df[col].mean())
+
+    # Fill categorical missing values
+    categorical_cols = df.select_dtypes(include=["object"]).columns
+
+    for col in categorical_cols:
+        if df[col].isnull().sum() > 0:
+            df[col] = df[col].fillna("Unknown")
+
+    report["cleaned_rows"] = len(df)
+
+    return df, report
