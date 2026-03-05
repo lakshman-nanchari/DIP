@@ -94,4 +94,76 @@ def preview_dataset(
         raise HTTPException(
             status_code=500,
             detail="Failed to generate dataset preview"
+        ) 
+    
+@router.get("/", response_model=list[DatasetResponse])
+def list_datasets(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    datasets = db.query(Dataset).filter(
+        Dataset.uploaded_by == current_user.id
+    ).all()
+
+    return datasets 
+
+
+@router.get("/{dataset_id}", response_model=DatasetResponse)
+def get_dataset(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    dataset = db.query(Dataset).filter(
+        Dataset.id == dataset_id,
+        Dataset.uploaded_by == current_user.id
+    ).first()
+
+    if not dataset:
+        raise HTTPException(
+            status_code=404,
+            detail="Dataset not found"
+        )
+
+    return dataset  
+
+
+
+
+@router.delete("/{dataset_id}")
+def delete_dataset(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    dataset = db.query(Dataset).filter(
+        Dataset.id == dataset_id,
+        Dataset.uploaded_by == current_user.id
+    ).first()
+
+    if not dataset:
+        raise HTTPException(
+            status_code=404,
+            detail="Dataset not found"
+        )
+
+    try:
+
+        if os.path.exists(dataset.file_path):
+            os.remove(dataset.file_path)
+
+        db.delete(dataset)
+        db.commit()
+
+        return {"message": "Dataset deleted successfully"}
+
+    except Exception:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete dataset"
         )
