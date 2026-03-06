@@ -162,4 +162,37 @@ def clean_dataset(df):
 
     report["cleaned_rows"] = len(df)
 
-    return df, report
+    return df, report 
+
+def generate_charts(df):
+
+    charts = {}
+
+    # Histogram data
+    numeric_df = df.select_dtypes(include=["number"])
+
+    if not numeric_df.empty:
+
+        histograms = {}
+
+        for col in numeric_df.columns:
+            histograms[col] = {
+                "values": df[col].dropna().tolist()
+            }
+
+        charts["histograms"] = histograms
+
+    # Correlation heatmap
+    if len(numeric_df.columns) > 1:
+        charts["correlation_matrix"] = numeric_df.corr().to_dict()
+
+    # Trend data (first numeric column)
+    if not numeric_df.empty:
+        target = numeric_df.columns[0]
+
+        charts["trend"] = {
+            "column": target,
+            "values": numeric_df[target].tolist()
+        }
+
+    return charts

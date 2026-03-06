@@ -8,7 +8,7 @@ from core.dependencies import get_current_user
 from datasets.models import Dataset
 from datasets.services import load_dataset
 
-from analytics.services import generate_profile, generate_insights, generate_forecast, clean_dataset
+from analytics.services import generate_profile, generate_insights, generate_forecast, clean_dataset, generate_charts
 
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -141,4 +141,37 @@ def clean_dataset_api(
         raise HTTPException(
             status_code=500,
             detail="Failed to clean dataset"
+        ) 
+    
+
+
+@router.get("/{dataset_id}/charts")
+def dataset_charts(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    dataset = db.execute(
+        select(Dataset).where(Dataset.id == dataset_id)
+    ).scalar_one_or_none()
+
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    try:
+
+        df = load_dataset(dataset.file_path)
+
+        charts = generate_charts(df)
+
+        return {
+            "dataset_id": dataset_id,
+            "charts": charts
+        }
+
+    except RuntimeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate chart data"
         )
