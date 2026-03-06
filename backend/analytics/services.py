@@ -195,4 +195,56 @@ def generate_charts(df):
             "values": numeric_df[target].tolist()
         }
 
-    return charts
+    return charts  
+
+
+def generate_insights(df):
+
+    insights = [] 
+
+    numeric_df = df.select_dtypes(include=["number"]) 
+
+    #summary  
+    summary = {
+        "rows": df.shape[0],
+        "columns": df.shape[1]
+    } 
+
+    #Correlation insights 
+    if len(numeric_df.columns) > 1: 
+
+        corr_matrix = numeric_df.corr() 
+
+        for col in corr_matrix.columns: 
+            for idx in corr_matrix.index: 
+
+                if col != idx and abs(corr_matrix.loc[col, idx]) > 0.8:
+
+                    insights.append( 
+                        f"{col} has strong correlation with {idx} ({round(corr_matrix.loc[col, idx],2)})"
+                    ) 
+
+
+     # Outlier detection
+    for col in numeric_df.columns:
+
+        mean = numeric_df[col].mean()
+        std = numeric_df[col].std()
+
+        outliers = numeric_df[
+            (numeric_df[col] > mean + 3 * std) |
+            (numeric_df[col] < mean - 3 * std)
+        ]
+
+        if len(outliers) > 0:
+            insights.append(f"Column {col} contains {len(outliers)} potential outliers")
+
+    # Average values
+    for col in numeric_df.columns:
+        insights.append(f"Average {col} is {round(numeric_df[col].mean(),2)}")
+
+    return {
+        "summary": summary,
+        "insights": insights
+    } 
+
