@@ -263,4 +263,22 @@ def generate_kpis(df):
     kpis["total_rows"] = int(df.shape[0])
     kpis["total_columns"] = int(df.shape[1])
 
-    return kpis
+    return kpis 
+
+def generate_dashboard(df):
+
+    dashboard = {}
+
+    # KPIs
+    dashboard["kpis"] = generate_kpis(df)
+
+    # Charts
+    dashboard["charts"] = generate_charts(df)
+
+    # Insights
+    dashboard["insights"] = generate_insights(df)
+
+    # Forecast
+    dashboard["forecast"] = generate_forecast(df)
+
+    return dashboard

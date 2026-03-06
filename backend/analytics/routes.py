@@ -9,7 +9,7 @@ from datasets.models import Dataset
 from datasets.services import load_dataset
 
 from analytics.services import generate_profile, generate_insights, generate_forecast
-from analytics.services import clean_dataset, generate_charts, generate_insights, generate_kpis
+from analytics.services import clean_dataset, generate_charts, generate_insights, generate_kpis, generate_dashboard
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
@@ -245,4 +245,41 @@ def dataset_kpis(
         raise HTTPException(
             status_code=500,
             detail="Failed to generate KPIs"
+        ) 
+    
+@router.get("/{dataset_id}/dashboard") 
+def dataset_dashboard( 
+    dataset_id: int, 
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    dataset = db.execute( 
+        select(Dataset).where(Dataset.id == dataset_id)
+    ).scalar_one_or_none() 
+
+    if not dataset:
+        raise HTTPException(
+            status_code=404, 
+            detail="Dataset not found"
+        ) 
+    try: 
+        df = load_dataset(dataset.file_path) 
+
+        dashboard = generate_dashboard(df) 
+
+        return {
+            "dataset_id": dataset_id,
+            "dashboard": dashboard
+        }
+
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate dashboard"
         )
