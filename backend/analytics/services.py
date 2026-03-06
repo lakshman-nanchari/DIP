@@ -248,3 +248,19 @@ def generate_insights(df):
         "insights": insights
     } 
 
+def generate_kpis(df):
+
+    numeric_df = df.select_dtypes(include=["number"])
+
+    if numeric_df.empty:
+        raise RuntimeError("No numeric columns available for KPI generation")
+
+    kpis = {}
+
+    for col in numeric_df.columns:
+        kpis[f"average_{col}"] = round(df[col].mean(), 2)
+
+    kpis["total_rows"] = int(df.shape[0])
+    kpis["total_columns"] = int(df.shape[1])
+
+    return kpis
