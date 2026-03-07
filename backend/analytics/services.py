@@ -1,6 +1,6 @@
 import pandas as pd 
 import numpy as np 
-
+from sklearn.ensemble import IsolationForest
 
 #generate a profile of the dataset with basic stats and correlations
 def generate_profile(df: pd.DataFrame):
@@ -281,4 +281,32 @@ def generate_dashboard(df):
     # Forecast
     dashboard["forecast"] = generate_forecast(df)
 
-    return dashboard
+    return dashboard  
+
+def detect_anomalies(df):
+    numeric_df = df.select_dtypes(include=["number"])
+
+    if numeric_df.empty:
+        raise RuntimeError("No numeric columns available for anomaly detection")
+
+    #train model 
+    model = IsolationForest(contamination=0.05, random_state=42)
+    
+    predictions = model.fit_predict(numeric_df) 
+
+    anomalies = numeric_df[predictions == -1] 
+
+    anomaly_rows = anomalies.index.tolist() 
+
+    results = [] 
+
+    for idx in anomaly_rows:
+        results.append({
+            "row_index": int(idx), 
+            "values": df.iloc[idx].to_dict()
+        }) 
+
+    return {
+        "total_anomalies": len(results),
+        "anomalies": results[:10]            #limit output  
+    }

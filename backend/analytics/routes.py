@@ -8,8 +8,8 @@ from core.dependencies import get_current_user
 from datasets.models import Dataset
 from datasets.services import load_dataset
 
-from analytics.services import generate_profile, generate_insights, generate_forecast
-from analytics.services import clean_dataset, generate_charts, generate_insights, generate_kpis, generate_dashboard
+from analytics.services import generate_profile, generate_insights, generate_forecast, clean_dataset
+from analytics.services import generate_charts, generate_insights, generate_kpis, generate_dashboard, detect_anomalies
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
@@ -282,4 +282,45 @@ def dataset_dashboard(
         raise HTTPException(
             status_code=500,
             detail="Failed to generate dashboard"
+        ) 
+    
+
+@router.get("/{dataset_id}/anomalies")
+def dataset_anomalies(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    dataset = db.execute(
+        select(Dataset).where(Dataset.id == dataset_id)
+    ).scalar_one_or_none()
+
+    if not dataset:
+        raise HTTPException(
+            status_code=404,
+            detail="Dataset not found"
+        )
+
+    try:
+
+        df = load_dataset(dataset.file_path)
+
+        anomalies = detect_anomalies(df)
+
+        return {
+            "dataset_id": dataset_id,
+            "anomaly_analysis": anomalies
+        }
+
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to detect anomalies"
         )
