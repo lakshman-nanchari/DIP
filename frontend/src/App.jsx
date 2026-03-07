@@ -1,8 +1,20 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+import DashboardHome from "./pages/DashboardHome";
+
 function App() {
   return (
-    <div className="text-2xl font-bold p-10">
-      Unified Data Intelligence Platform
-    </div>
+    <BrowserRouter>
+      <Routes>
+
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+
+        <Route path="/dashboard" element={<DashboardHome />} />
+
+      </Routes>
+    </BrowserRouter>
   );
 }
 
