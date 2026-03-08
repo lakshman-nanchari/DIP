@@ -1,70 +1,79 @@
-import { useContex, useContext, useState } from "react"; 
-import { useNavigate, Link } from "react-router-dom"; 
-import API from "../api/axios"; 
-import { AuthContext } from "../context/AuthContext"; 
+import { useContext, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import API from "../api/axios";
+import { AuthContext } from "../context/AuthContext";
 
 function LoginPage() {
-    const {login} = useContext(AuthContext);
-    const navigate = useNavigate(); 
+    const { login } = useContext(AuthContext);
+    const navigate = useNavigate();
 
-    const [email, setEmail] = useState(""); 
-    const [password, setpassword] = useState(""); 
-    const [error, setError] = useState(""); 
+    const [email, setEmail] = useState("");
+    const [password, setpassword] = useState("");
+    const [error, setError] = useState("");
 
     const handleSubmit = async (e) => {
-        e.preventDefault(); 
+    e.preventDefault();
 
-        try{
+    setError(""); // clear previous error
 
-            const res = await API.post("/users/login",{
-                email, 
-                password,
-            }); 
+    try {
 
-            login(res.data.access_token); 
+        const formData = new URLSearchParams();
+        formData.append("username", email);
+        formData.append("password", password);
 
-            navigate("/dashboard");
-        } catch (err) {
-            setError("Invalid credentials");
-        }
-    }; 
+        const res = await API.post("/users/login", formData, {
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        });
+
+        login(res.data.access_token);
+
+        navigate("/dashboard");
+
+    } catch (err) {
+        setError("Invalid credentials");
+    }
+};
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-500">
             <div className="bg-white p-8 rounded-xl shadow-md w-96">
+
                 <h2 className="text-2xl font-bold mb-6 text-center">
-                    Login 
-                </h2> 
+                    Login
+                </h2>
 
                 {error && (
                     <p className="text-red-500 text-sm mb-4">{error}</p>
-                )} 
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input 
+
+                    <input
                         type="email"
                         placeholder="email"
-                        className="w-full border p-3 rounded" 
-                        value={email} 
+                        className="w-full border p-3 rounded"
+                        value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                    />  
+                    />
 
-                    <input 
+                    <input
                         type="password"
-                        placeholder="Password" 
-                        className="w-full border p-3 rounded" 
-                        value={password} 
+                        placeholder="Password"
+                        className="w-full border p-3 rounded"
+                        value={password}
                         onChange={(e) => setpassword(e.target.value)}
-                    />   
+                    />
 
-                    <button 
+                    <button
                         className="w-full bg-indigo-600 text-white p-3 rounded hover:bg-indigo-700"
                     >
                         Login
-                    </button> 
+                    </button>
 
-
-                </form> 
+                </form>
 
                 <p className="mt-4 text-center text-sm">
                     No account?{" "}
@@ -72,12 +81,10 @@ function LoginPage() {
                         Sign up
                     </Link>
                 </p>
-            </div> 
 
-
+            </div>
         </div>
     );
-} 
-
+}
 
 export default LoginPage;
