@@ -31,7 +31,11 @@ function App() {
 
         <Route path="/upload-dataset" element={<UploadDatasetPage />} />
 
-        <Route path="/analytics" element={<AnalyticsDashboardPage />} />
+        <Route
+          path="/analytics/:dataset_id"
+          element={<AnalyticsDashboardPage />}
+        />
+
 
       </Routes>
 
