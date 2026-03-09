@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import KpiCard from "../components/KpiCard";
 import InsightsPanel from "../components/InsightsPanel";
+import ChartComponent from "../components/ChartComponent";
+import AnomalyTable from "../components/AnomalyTable";
+
 import API from "../api/axios";
 
 function AnalyticsDashboardPage() {
@@ -31,8 +35,6 @@ function AnalyticsDashboardPage() {
     try {
 
       const res = await API.get(`/analytics/${dataset_id}/dashboard`);
-
-      console.log("Dashboard data:", res.data);
 
       setDashboard(res.data.dashboard);
 
@@ -107,6 +109,73 @@ function AnalyticsDashboardPage() {
 
           <InsightsPanel
             insights={dashboard?.insights?.insights || []}
+          />
+
+
+          {/* HISTOGRAM CHARTS */}
+
+          <h2 className="text-xl font-semibold mt-10 mb-4">
+            Charts
+          </h2>
+
+          <div className="grid grid-cols-2 gap-6">
+
+            {Object.entries(dashboard?.charts?.histograms || {}).map(([column, data]) => (
+
+              <ChartComponent
+                key={column}
+                title={`Histogram: ${column}`}
+                data={data.values.slice(0,500).map((v,i)=>({
+                  index:i,
+                  value:v
+                }))}
+              />
+
+            ))}
+
+          </div>
+
+
+          {/* TREND */}
+
+          <h2 className="text-xl font-semibold mt-10 mb-4">
+            Trend
+          </h2>
+
+          <ChartComponent
+            title={`Trend: ${dashboard?.charts?.trend?.column}`}
+            data={dashboard?.charts?.trend?.values
+              ?.slice(0,500)
+              .map((v,i)=>({
+                index:i,
+                value:v
+              }))}
+          />
+
+
+          {/* FORECAST */}
+
+          <h2 className="text-xl font-semibold mt-10 mb-4">
+            Forecast
+          </h2>
+
+          <ChartComponent
+            title="Forecast"
+            data={dashboard?.forecast?.forecast?.map(item => ({
+              index: item.step,
+              value: item.predicted_value
+            }))}
+          />
+
+
+          {/* ANOMALY DETECTION */}
+
+          <h2 className="text-xl font-semibold mt-10 mb-4">
+            Anomaly Detection
+          </h2>
+
+          <AnomalyTable
+            anomalies={dashboard?.anomalies?.anomalies || []}
           />
 
         </div>
