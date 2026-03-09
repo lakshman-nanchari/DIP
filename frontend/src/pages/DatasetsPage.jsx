@@ -13,6 +13,7 @@ function DatasetsPage() {
   }, []);
 
   const fetchDatasets = async () => {
+
     try {
 
       const res = await API.get("/datasets");
@@ -20,8 +21,11 @@ function DatasetsPage() {
       setDatasets(res.data);
 
     } catch (err) {
+
       console.error("Failed to fetch datasets", err);
+
     }
+
   };
 
   return (
@@ -40,16 +44,21 @@ function DatasetsPage() {
           </h1>
 
           {datasets.length === 0 ? (
+
             <p>No datasets uploaded yet.</p>
+
           ) : (
 
             <div className="grid grid-cols-3 gap-6">
 
               {datasets.map((dataset) => (
+
                 <DatasetCard
                   key={dataset.id}
                   dataset={dataset}
+                  refreshDatasets={fetchDatasets}   
                 />
+
               ))}
 
             </div>
