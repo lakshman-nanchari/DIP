@@ -20,10 +20,10 @@ function DatasetCard({ dataset }) {
       </p>
 
       <button
-        onClick={() => navigate(`/analytics/${dataset.id}`)}
+        onClick={() => navigate(`/datasets/${dataset.id}/preview`)}
         className="mt-4 w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700"
       >
-        Use Dataset
+        Preview Dataset
       </button>
 
     </div>

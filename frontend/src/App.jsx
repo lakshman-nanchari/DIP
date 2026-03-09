@@ -5,8 +5,8 @@ import SignupPage from "./pages/SignupPage";
 import DashboardHome from "./pages/DashboardHome";
 import DatasetsPage from "./pages/DatasetsPage";
 import UploadDatasetPage from "./pages/UploadDatasetPage";
-import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
-
+import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage"; 
+import DatasetPreviewPage from "./pages/DatasetPreviewPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 function App() {
@@ -36,6 +36,10 @@ function App() {
           element={<AnalyticsDashboardPage />}
         />
 
+        <Route
+          path="/datasets/:dataset_id/preview"
+          element={<DatasetPreviewPage />}
+        />
 
       </Routes>
 
