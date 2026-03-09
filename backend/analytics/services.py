@@ -265,24 +265,6 @@ def generate_kpis(df):
 
     return kpis 
 
-def generate_dashboard(df):
-
-    dashboard = {}
-
-    # KPIs
-    dashboard["kpis"] = generate_kpis(df)
-
-    # Charts
-    dashboard["charts"] = generate_charts(df)
-
-    # Insights
-    dashboard["insights"] = generate_insights(df)
-
-    # Forecast
-    dashboard["forecast"] = generate_forecast(df)
-
-    return dashboard  
-
 def detect_anomalies(df):
     numeric_df = df.select_dtypes(include=["number"])
 
@@ -309,4 +291,25 @@ def detect_anomalies(df):
     return {
         "total_anomalies": len(results),
         "anomalies": results[:10]            #limit output  
-    }
+    }   
+
+def generate_dashboard(df):
+
+    dashboard = {}
+
+    # KPIs
+    dashboard["kpis"] = generate_kpis(df)
+
+    # Charts
+    dashboard["charts"] = generate_charts(df)
+
+    # Insights
+    dashboard["insights"] = generate_insights(df)
+
+    # Forecast
+    dashboard["forecast"] = generate_forecast(df)
+
+    # Anomaly detection
+    dashboard["anomalies"] = detect_anomalies(df)
+
+    return dashboard
