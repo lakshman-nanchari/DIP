@@ -108,7 +108,7 @@ function AnalyticsDashboardPage() {
           {/* INSIGHTS */}
 
           <InsightsPanel
-            insights={dashboard?.insights?.insights || []}
+            insights={dashboard?.insights}
           />
 
 
