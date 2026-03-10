@@ -186,43 +186,68 @@ def generate_insights(df):
 
 
 # CHART GENERATION
-
-
 def generate_charts(df):
 
     charts = {}
 
-    numeric_df = df.select_dtypes(include=["number"])
+    numeric_cols = df.select_dtypes(include=["number"]).columns
+    categorical_cols = df.select_dtypes(include=["object"]).columns
 
-    if not numeric_df.empty:
+    # HISTOGRAMS
 
-        histograms = {}
+    histograms = {}
 
-        for col in numeric_df.columns:
+    for col in numeric_cols[:4]:
 
-            values = df[col].dropna().tolist()[:1000]
+        values = df[col].dropna().values
 
-            histograms[col] = {
-                "values": values
-            }
+        if len(values) == 0:
+            continue
 
-        charts["histograms"] = histograms
+        counts, bins = np.histogram(values, bins=10)
 
-    if len(numeric_df.columns) > 1:
-        charts["correlation_matrix"] = numeric_df.corr().to_dict()
+        histograms[col] = {
+            "labels": [round(b,2) for b in bins[:-1]],
+            "values": counts.tolist()
+        }
 
-    if not numeric_df.empty:
+    charts["histograms"] = histograms
 
-        target = numeric_df.columns[-1]
+
+    # BAR CHARTS
+
+    bars = {}
+
+    for col in categorical_cols[:3]:
+
+        counts = df[col].value_counts().head(10)
+
+        bars[col] = {
+            "labels": counts.index.tolist(),
+            "values": counts.values.tolist()
+        }
+
+    charts["bars"] = bars
+
+
+    # CORRELATION MATRIX
+
+    if len(numeric_cols) > 1:
+        charts["correlation_matrix"] = df[numeric_cols].corr().to_dict()
+
+
+    # TREND
+
+    if len(numeric_cols) > 0:
+
+        target = next((c for c in numeric_cols if "price" in c or "sales" in c), numeric_cols[0])
 
         charts["trend"] = {
             "column": target,
-            "values": numeric_df[target].tolist()[:1000]
+            "values": df[target].tolist()[:1000]
         }
 
     return charts
-
-
 
 # KPI GENERATION
 

@@ -151,12 +151,11 @@ def clean_dataset_api(
         ) 
     
 
-
 @router.get("/{dataset_id}/charts")
 def dataset_charts(
     dataset_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ):
 
     dataset = db.execute(
@@ -174,14 +173,16 @@ def dataset_charts(
 
         return {
             "dataset_id": dataset_id,
+            "chart_count": len(charts),
             "charts": charts
         }
 
-    except RuntimeError:
+    except Exception as e:
+
         raise HTTPException(
             status_code=500,
-            detail="Failed to generate chart data"
-        ) 
+            detail=f"Failed to generate chart data: {str(e)}"
+        )
     
 @router.get("/{dataset_id}/kpis")
 def dataset_kpis(
