@@ -11,35 +11,60 @@ def generate_profile(df: pd.DataFrame):
 
     profile = {}
 
-    profile["rows"] = df.shape[0]
-    profile["columns"] = df.shape[1]
+    # Basic dataset info
+    profile["rows"] = int(df.shape[0])
+    profile["columns"] = int(df.shape[1])
 
+    # Column data types
     profile["column_types"] = {
         col: str(dtype) for col, dtype in df.dtypes.items()
     }
 
-    profile["missing_values"] = df.isnull().sum().to_dict()
+    # Missing values count
+    missing_counts = df.isnull().sum()
 
+    profile["missing_values"] = {
+        col: int(count) for col, count in missing_counts.items()
+    }
+
+    # Missing percentage
+    profile["missing_percent"] = {
+        col: round((count / len(df)) * 100, 2)
+        for col, count in missing_counts.items()
+    }
+
+    # Numeric columns
     numeric_df = df.select_dtypes(include=["number"])
 
     if not numeric_df.empty:
 
-        stats = numeric_df.describe().to_dict()
+        stats = numeric_df.describe()
 
+        # Numeric summary
         profile["numeric_summary"] = {
             col: {
-                "mean": stats[col]["mean"],
-                "min": stats[col]["min"],
-                "max": stats[col]["max"]
+                "mean": round(float(stats.loc["mean", col]), 4),
+                "min": round(float(stats.loc["min", col]), 4),
+                "max": round(float(stats.loc["max", col]), 4),
+                "std": round(float(stats.loc["std", col]), 4)
             }
-            for col in stats
+            for col in numeric_df.columns
         }
 
-        profile["correlation_matrix"] = numeric_df.corr().to_dict()
+        # Correlation matrix
+        corr = numeric_df.corr().fillna(0)
+
+        profile["correlation"] = {
+            col: {
+                subcol: round(float(value), 4)
+                for subcol, value in corr[col].items()
+            }
+            for col in corr.columns
+        }
 
     else:
         profile["numeric_summary"] = {}
-        profile["correlation_matrix"] = {}
+        profile["correlation"] = {}
 
     return profile
 
