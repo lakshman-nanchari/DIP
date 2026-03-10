@@ -1,5 +1,12 @@
 function KpiCard({ title, value }) {
 
+  const formatValue = (val) => {
+    if (typeof val === "number") {
+      return val.toLocaleString();
+    }
+    return val;
+  };
+
   return (
     <div className="bg-white shadow rounded p-6">
 
@@ -8,7 +15,7 @@ function KpiCard({ title, value }) {
       </h3>
 
       <p className="text-2xl font-bold text-indigo-600">
-        {value}
+        {formatValue(value)}
       </p>
 
     </div>

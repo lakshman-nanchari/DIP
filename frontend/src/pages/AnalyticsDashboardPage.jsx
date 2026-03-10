@@ -13,10 +13,13 @@ import API from "../api/axios";
 function AnalyticsDashboardPage() {
 
   const { dataset_id } = useParams();
+  const [datasetName, setDatasetName] = useState("");
   const navigate = useNavigate();
 
   const [dashboard, setDashboard] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); 
+
+  
 
   useEffect(() => {
 
@@ -29,7 +32,6 @@ function AnalyticsDashboardPage() {
 
   }, [dataset_id]);
 
-
   const fetchDashboard = async () => {
 
     try {
@@ -37,6 +39,7 @@ function AnalyticsDashboardPage() {
       const res = await API.get(`/analytics/${dataset_id}/dashboard`);
 
       setDashboard(res.data.dashboard);
+      setDatasetName(res.data.dataset_name);
 
     } catch (err) {
 
@@ -49,7 +52,6 @@ function AnalyticsDashboardPage() {
     }
 
   };
-
 
   if (loading) {
     return (
@@ -73,37 +75,33 @@ function AnalyticsDashboardPage() {
 
         <div className="p-8">
 
-          <h1 className="text-2xl font-bold mb-6">
+          <div className="mb-6">
+
+            <h1 className="text-2xl font-bold">
             Analytics Dashboard
-          </h1>
+            </h1>
 
+            <p className="text-gray-500">
+            Dataset: {datasetName}
+            </p>
 
-          {/* KPI SECTION */}
+            </div>
 
-          <div className="grid grid-cols-4 gap-6 mb-8">
+            {/* KPI SECTION */}
 
-            <KpiCard
-              title="Average Amount"
-              value={dashboard?.kpis?.average_Amount ?? "N/A"}
-            />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
 
-            <KpiCard
-              title="Average Boxes"
-              value={dashboard?.kpis?.average_Boxes ?? "N/A"}
-            />
+            {Object.entries(dashboard?.kpis || {}).map(([key, value]) => (
 
             <KpiCard
-              title="Total Rows"
-              value={dashboard?.kpis?.total_rows ?? "N/A"}
+              key={key}
+              title={key.replaceAll("_", " ")}
+              value={value}
             />
 
-            <KpiCard
-              title="Total Columns"
-              value={dashboard?.kpis?.total_columns ?? "N/A"}
-            />
+            ))}
 
-          </div>
-
+            </div>
 
           {/* INSIGHTS */}
 
