@@ -84,7 +84,7 @@ transaction_id,customer_id,transaction_date,transaction_amount,payment_method,pr
 83,89,9/22/2023,210.25,Credit Card,9,9
 84,96,9/23/2023,382.11,Debit Card,29,6
 85,494,9/24/2023,163.08,Credit Card,45,6
-86,386,9/25/2023,472,PayPal,20,4
+86,386,9/25/2023,472.0,PayPal,20,4
 87,424,9/26/2023,267.61,Cash,42,3
 88,48,9/27/2023,346.61,Cash,43,7
 89,500,9/28/2023,169.33,Debit Card,45,9
@@ -204,7 +204,7 @@ transaction_id,customer_id,transaction_date,transaction_amount,payment_method,pr
 203,462,1/20/2024,11.52,Cash,4,2
 204,374,1/21/2024,451.75,Debit Card,3,4
 205,395,1/22/2024,83.44,Cash,40,4
-206,324,1/23/2024,401,Debit Card,20,8
+206,324,1/23/2024,401.0,Debit Card,20,8
 207,234,1/24/2024,53.82,Cash,46,1
 208,438,1/25/2024,135.15,PayPal,28,9
 209,472,1/26/2024,450.58,Credit Card,45,9
@@ -215,12 +215,12 @@ transaction_id,customer_id,transaction_date,transaction_amount,payment_method,pr
 214,157,1/31/2024,59.99,Cash,47,5
 215,343,2/1/2024,84.5,Cash,39,7
 216,346,2/2/2024,399.94,Credit Card,29,1
-217,269,2/3/2024,254,Debit Card,42,2
+217,269,2/3/2024,254.0,Debit Card,42,2
 218,276,2/4/2024,381.61,Cash,34,7
 219,121,2/5/2024,256.41,PayPal,1,2
 220,447,2/6/2024,460.13,Cash,1,1
 221,335,2/7/2024,427.35,Debit Card,16,7
-222,8,2/8/2024,179,PayPal,44,6
+222,8,2/8/2024,179.0,PayPal,44,6
 223,310,2/9/2024,485.93,Cash,24,4
 224,166,2/10/2024,77.47,Cash,27,8
 225,36,2/11/2024,385.3,PayPal,38,1
@@ -378,7 +378,7 @@ transaction_id,customer_id,transaction_date,transaction_amount,payment_method,pr
 377,303,7/12/2024,365.52,Cash,8,1
 378,203,7/13/2024,412.68,PayPal,15,1
 379,413,7/14/2024,356.97,Credit Card,21,9
-380,78,7/15/2024,455,Credit Card,12,8
+380,78,7/15/2024,455.0,Credit Card,12,8
 381,416,7/16/2024,36.03,Debit Card,49,3
 382,241,7/17/2024,385.72,PayPal,8,2
 383,1,7/18/2024,233.03,Cash,8,9
@@ -497,7 +497,7 @@ transaction_id,customer_id,transaction_date,transaction_amount,payment_method,pr
 496,177,11/8/2024,124.25,Cash,9,8
 497,341,11/9/2024,92.6,PayPal,12,4
 498,442,11/10/2024,98.3,Debit Card,21,2
-499,310,11/11/2024,101,Credit Card,42,6
+499,310,11/11/2024,101.0,Credit Card,42,6
 500,320,11/12/2024,156.36,Cash,35,5
 501,149,11/13/2024,362.71,Debit Card,31,9
 502,102,11/14/2024,438.4,PayPal,47,3
@@ -636,7 +636,7 @@ transaction_id,customer_id,transaction_date,transaction_amount,payment_method,pr
 635,169,3/27/2025,443.02,Cash,29,8
 636,425,3/28/2025,470.45,Debit Card,26,8
 637,411,3/29/2025,186.58,PayPal,41,10
-638,416,3/30/2025,211,Cash,26,2
+638,416,3/30/2025,211.0,Cash,26,2
 639,169,3/31/2025,392.03,Credit Card,29,5
 640,344,4/1/2025,243.11,Credit Card,40,10
 641,70,4/2/2025,424.44,PayPal,33,1
@@ -718,7 +718,7 @@ transaction_id,customer_id,transaction_date,transaction_amount,payment_method,pr
 717,207,6/17/2025,466.35,Credit Card,9,1
 718,424,6/18/2025,330.28,Cash,40,1
 719,271,6/19/2025,115.96,Debit Card,10,5
-720,186,6/20/2025,393,Cash,50,3
+720,186,6/20/2025,393.0,Cash,50,3
 721,261,6/21/2025,422.92,Credit Card,27,6
 722,316,6/22/2025,332.84,PayPal,16,9
 723,422,6/23/2025,186.73,PayPal,23,9
@@ -803,7 +803,7 @@ transaction_id,customer_id,transaction_date,transaction_amount,payment_method,pr
 802,127,9/10/2025,122.63,Cash,37,3
 803,484,9/11/2025,277.81,PayPal,2,10
 804,438,9/12/2025,337.96,PayPal,26,2
-805,58,9/13/2025,169,PayPal,24,7
+805,58,9/13/2025,169.0,PayPal,24,7
 806,185,9/14/2025,161.22,PayPal,29,4
 807,274,9/15/2025,483.93,Cash,24,5
 808,271,9/16/2025,475.01,PayPal,24,6
@@ -839,7 +839,7 @@ transaction_id,customer_id,transaction_date,transaction_amount,payment_method,pr
 838,359,10/16/2025,429.26,PayPal,44,10
 839,27,10/17/2025,489.59,PayPal,37,3
 840,35,10/18/2025,29.56,Cash,14,1
-841,233,10/19/2025,72,Debit Card,4,1
+841,233,10/19/2025,72.0,Debit Card,4,1
 842,59,10/20/2025,444.21,PayPal,5,8
 843,319,10/21/2025,489.39,PayPal,3,7
 844,371,10/22/2025,173.87,Cash,3,7

@@ -51,7 +51,7 @@ customer_id,product_id,order_id,city,state,date,product_category,sales,quantity_
 156,1,836,Los Angeles,California,1/14/2024,Clothing,786.12,3,Q2
 556,14,477,New York,New York,1/14/2024,Electronics,641.94,3,Q2
 576,3,505,Chicago,Illinois,1/15/2024,Clothing,615.46,5,Q2
-660,5,624,Houston,Texas,1/15/2024,Clothing,571,7,Q2
+660,5,624,Houston,Texas,1/15/2024,Clothing,571.0,7,Q2
 5,4,1171,New York,New York,1/17/2024,Toys,828.55,7,Q2
 59,4,513,San Jose,California,1/17/2024,Toys,566.24,1,Q2
 432,17,1205,Philadelphia,Pennsylvania,1/17/2024,Toys,669.37,4,Q2
@@ -75,7 +75,7 @@ customer_id,product_id,order_id,city,state,date,product_category,sales,quantity_
 659,7,235,New York,New York,1/23/2024,Toys,993.01,5,Q2
 131,13,128,Los Angeles,California,1/24/2024,Furniture,740.79,2,Q2
 430,17,66,Philadelphia,Pennsylvania,1/24/2024,Furniture,847.49,2,Q2
-521,17,857,San Jose,California,1/24/2024,Books,910,6,Q3
+521,17,857,San Jose,California,1/24/2024,Books,910.0,6,Q3
 552,16,492,San Antonio,Texas,1/24/2024,Clothing,670.94,2,Q3
 570,7,971,Phoenix,Arizona,1/24/2024,Toys,493.76,5,Q3
 621,9,872,Philadelphia,Pennsylvania,1/24/2024,Clothing,206.17,7,Q3
@@ -152,7 +152,7 @@ customer_id,product_id,order_id,city,state,date,product_category,sales,quantity_
 244,6,53,New York,New York,2/12/2024,Electronics,614.88,8,Q1
 402,13,656,Houston,Texas,2/12/2024,Clothing,545.65,3,Q1
 81,5,305,Houston,Texas,2/13/2024,Electronics,206.13,4,Q1
-83,18,354,San Jose,California,2/13/2024,Clothing,751,2,Q1
+83,18,354,San Jose,California,2/13/2024,Clothing,751.0,2,Q1
 229,8,227,Los Angeles,California,2/13/2024,Furniture,933.45,9,Q1
 339,15,743,New York,New York,2/13/2024,Books,347.77,1,Q1
 73,5,850,Los Angeles,California,2/14/2024,Books,230.86,2,Q1
@@ -194,7 +194,7 @@ customer_id,product_id,order_id,city,state,date,product_category,sales,quantity_
 576,3,238,San Diego,California,2/21/2024,Books,290.96,4,Q2
 584,5,526,Dallas,Texas,2/21/2024,Toys,706.69,3,Q2
 89,19,1135,Philadelphia,Pennsylvania,2/22/2024,Furniture,129.92,3,Q2
-439,20,490,Philadelphia,Pennsylvania,2/22/2024,Books,634,8,Q2
+439,20,490,Philadelphia,Pennsylvania,2/22/2024,Books,634.0,8,Q2
 559,6,801,New York,New York,2/22/2024,Electronics,224.75,8,Q2
 589,12,911,Los Angeles,California,2/22/2024,Furniture,269.96,3,Q2
 596,4,1178,Philadelphia,Pennsylvania,2/22/2024,Electronics,306.76,9,Q2
@@ -400,14 +400,14 @@ customer_id,product_id,order_id,city,state,date,product_category,sales,quantity_
 138,12,1148,Houston,Texas,4/22/2024,Books,269.6,1,Q1
 342,20,200,San Diego,California,4/22/2024,Books,533.32,6,Q1
 209,11,1125,New York,New York,4/23/2024,Clothing,476.09,8,Q1
-273,18,515,Philadelphia,Pennsylvania,4/23/2024,Furniture,760,2,Q1
+273,18,515,Philadelphia,Pennsylvania,4/23/2024,Furniture,760.0,2,Q1
 530,4,954,San Diego,California,4/23/2024,Toys,196.66,10,Q1
 581,16,910,Philadelphia,Pennsylvania,4/23/2024,Furniture,789.69,5,Q1
 676,13,157,Philadelphia,Pennsylvania,4/23/2024,Furniture,948.88,1,Q1
 55,14,711,San Antonio,Texas,4/24/2024,Toys,641.89,10,Q1
 522,6,601,Dallas,Texas,4/24/2024,Furniture,582.61,10,Q1
 175,13,919,Houston,Texas,4/25/2024,Clothing,634.03,10,Q1
-433,12,615,Phoenix,Arizona,4/25/2024,Clothing,260,3,Q1
+433,12,615,Phoenix,Arizona,4/25/2024,Clothing,260.0,3,Q1
 504,4,800,Phoenix,Arizona,4/25/2024,Toys,648.7,5,Q1
 553,13,460,San Antonio,Texas,4/25/2024,Books,252.77,2,Q1
 132,17,678,Chicago,Illinois,4/26/2024,Toys,786.06,1,Q1
@@ -424,7 +424,7 @@ customer_id,product_id,order_id,city,state,date,product_category,sales,quantity_
 622,13,900,Chicago,Illinois,4/28/2024,Clothing,854.5,7,Q2
 662,10,208,San Jose,California,4/28/2024,Clothing,243.35,9,Q2
 78,9,728,Chicago,Illinois,4/30/2024,Toys,114.71,5,Q2
-205,10,802,San Jose,California,4/30/2024,Clothing,610,8,Q2
+205,10,802,San Jose,California,4/30/2024,Clothing,610.0,8,Q2
 459,11,211,Dallas,Texas,4/30/2024,Books,339.18,3,Q2
 559,9,772,Chicago,Illinois,4/30/2024,Clothing,427.86,1,Q2
 86,20,99,San Jose,California,5/1/2024,Toys,782.56,6,Q2
@@ -710,7 +710,7 @@ customer_id,product_id,order_id,city,state,date,product_category,sales,quantity_
 204,2,1106,Chicago,Illinois,7/18/2024,Furniture,103.35,6,Q3
 339,5,666,Los Angeles,California,7/18/2024,Toys,108.84,7,Q3
 612,10,970,Los Angeles,California,7/18/2024,Toys,711.03,6,Q3
-650,13,809,New York,New York,7/18/2024,Clothing,543,7,Q3
+650,13,809,New York,New York,7/18/2024,Clothing,543.0,7,Q3
 170,1,627,Chicago,Illinois,7/19/2024,Books,342.65,1,Q3
 239,7,195,Los Angeles,California,7/19/2024,Electronics,223.58,8,Q3
 399,19,422,San Jose,California,7/19/2024,Toys,118.44,7,Q3
@@ -937,17 +937,17 @@ customer_id,product_id,order_id,city,state,date,product_category,sales,quantity_
 585,20,595,Los Angeles,California,9/24/2024,Electronics,186.12,7,Q2
 636,2,877,Chicago,Illinois,9/24/2024,Books,107.15,2,Q2
 366,19,119,Dallas,Texas,9/25/2024,Furniture,903.59,6,Q2
-527,18,289,Dallas,Texas,9/25/2024,Clothing,616,4,Q3
+527,18,289,Dallas,Texas,9/25/2024,Clothing,616.0,4,Q3
 667,8,480,Houston,Texas,9/25/2024,Furniture,136.21,10,Q3
 50,18,340,Los Angeles,California,9/27/2024,Clothing,446.41,6,Q3
 98,1,588,Houston,Texas,9/27/2024,Books,876.45,1,Q3
 220,2,230,Los Angeles,California,9/27/2024,Furniture,488.3,6,Q3
 64,17,1078,New York,New York,9/28/2024,Furniture,593.29,2,Q3
-228,11,51,San Diego,California,9/28/2024,Clothing,192,9,Q3
+228,11,51,San Diego,California,9/28/2024,Clothing,192.0,9,Q3
 309,10,111,Houston,Texas,9/28/2024,Toys,661.3,4,Q3
 287,9,37,Chicago,Illinois,9/29/2024,Clothing,477.68,5,Q3
 141,11,311,Houston,Texas,9/30/2024,Furniture,269.8,8,Q3
-271,10,533,Chicago,Illinois,9/30/2024,Toys,925,10,Q3
+271,10,533,Chicago,Illinois,9/30/2024,Toys,925.0,10,Q3
 328,16,1168,San Diego,California,9/30/2024,Books,280.05,4,Q3
 542,19,571,Los Angeles,California,9/30/2024,Furniture,491.44,1,Q3
 544,2,288,Dallas,Texas,9/30/2024,Electronics,177.18,1,Q3
@@ -968,7 +968,7 @@ customer_id,product_id,order_id,city,state,date,product_category,sales,quantity_
 583,1,736,Phoenix,Arizona,10/6/2024,Electronics,747.98,8,Q3
 97,14,28,Houston,Texas,10/7/2024,Electronics,312.86,4,Q3
 349,8,474,Chicago,Illinois,10/7/2024,Electronics,824.87,10,Q3
-582,10,725,San Jose,California,10/7/2024,Clothing,239,3,Q4
+582,10,725,San Jose,California,10/7/2024,Clothing,239.0,3,Q4
 18,20,56,Houston,Texas,10/9/2024,Toys,607.99,8,Q4
 135,11,527,Philadelphia,Pennsylvania,10/9/2024,Furniture,621.43,1,Q4
 152,3,346,Los Angeles,California,10/9/2024,Clothing,401.67,7,Q4
@@ -1121,7 +1121,7 @@ customer_id,product_id,order_id,city,state,date,product_category,sales,quantity_
 688,3,1099,New York,New York,11/19/2024,Books,906.24,1,Q4
 349,6,1056,Los Angeles,California,11/20/2024,Toys,271.12,4,Q4
 385,5,839,Philadelphia,Pennsylvania,11/20/2024,Furniture,730.56,6,Q4
-624,4,358,Los Angeles,California,11/20/2024,Electronics,404,5,Q4
+624,4,358,Los Angeles,California,11/20/2024,Electronics,404.0,5,Q4
 672,19,853,New York,New York,11/20/2024,Clothing,486.58,4,Q1
 684,18,798,San Diego,California,11/20/2024,Clothing,633.3,3,Q1
 108,12,113,Houston,Texas,11/21/2024,Toys,527.95,6,Q1
