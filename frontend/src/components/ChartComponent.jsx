@@ -1,6 +1,8 @@
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -8,7 +10,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-function ChartComponent({ title, data }) {
+function ChartComponent({ title, data, type = "line" }) {
 
   if (!data || data.length === 0) {
     return (
@@ -22,33 +24,40 @@ function ChartComponent({ title, data }) {
   return (
     <div className="bg-white shadow rounded p-6">
 
-      <h3 className="font-semibold mb-4">
-        {title}
-      </h3>
+      <h3 className="font-semibold mb-4">{title}</h3>
 
       <ResponsiveContainer width="100%" height={300}>
 
-        <LineChart data={data}>
+        {type === "bar" ? (
 
-          <CartesianGrid strokeDasharray="3 3" />
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="index" />
+            <YAxis domain={['auto','auto']} />
+            <Tooltip />
+            <Bar
+              dataKey="value"
+              fill="#6366f1"
+            />
+          </BarChart>
 
-          {/* X axis */}
-          <XAxis dataKey="index" />
+        ) : (
 
-          {/* IMPORTANT FIX: auto scale for forecast values */}
-          <YAxis domain={['auto','auto']} />
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="index" />
+            <YAxis domain={['auto','auto']} />
+            <Tooltip />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#6366f1"
+              strokeWidth={2}
+              dot={false}
+            />
+          </LineChart>
 
-          <Tooltip />
-
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke="#6366f1"
-            strokeWidth={2}
-            dot={false}   // improves performance
-          />
-
-        </LineChart>
+        )}
 
       </ResponsiveContainer>
 

@@ -111,30 +111,53 @@ function AnalyticsDashboardPage() {
             insights={dashboard?.insights}
           />
 
+        {/* HISTOGRAM CHARTS */}
 
-          {/* HISTOGRAM CHARTS */}
+        <h2 className="text-xl font-semibold mt-10 mb-4">
+          Charts
+        </h2>
+
+        <div className="grid grid-cols-2 gap-6">
+
+          {Object.entries(dashboard?.charts?.histograms || {}).map(([column, data]) => (
+
+            <ChartComponent
+              key={column}
+              title={`Histogram: ${column}`}
+              type="bar"
+              data={data.values.slice(0,500).map((v,i)=>({
+                index:i,
+                value:v
+              }))}
+            />
+
+          ))}
+
+        </div>  
+
+
+        {/* CATEGORY DISTRIBUTION */}
 
           <h2 className="text-xl font-semibold mt-10 mb-4">
-            Charts
+          Category Distribution
           </h2>
 
           <div className="grid grid-cols-2 gap-6">
 
-            {Object.entries(dashboard?.charts?.histograms || {}).map(([column, data]) => (
+          {Object.entries(dashboard?.charts?.bars || {}).map(([column, data]) => (
 
-              <ChartComponent
-                key={column}
-                title={`Histogram: ${column}`}
-                data={data.values.slice(0,500).map((v,i)=>({
-                  index:i,
-                  value:v
-                }))}
-              />
+            <ChartComponent
+              key={column}
+              title={`Category: ${column}`}
+              data={data.labels.map((label,i)=>({
+                index: label,
+                value: data.values[i]
+              }))}
+            />
 
-            ))}
+          ))}
 
           </div>
-
 
           {/* TREND */}
 
@@ -143,6 +166,7 @@ function AnalyticsDashboardPage() {
           </h2>
 
           <ChartComponent
+            type="line"
             title={`Trend: ${dashboard?.charts?.trend?.column}`}
             data={dashboard?.charts?.trend?.values
               ?.slice(0,500)
@@ -153,19 +177,20 @@ function AnalyticsDashboardPage() {
           />
 
 
-          {/* FORECAST */}
+            {/* FORECAST */}
 
-          <h2 className="text-xl font-semibold mt-10 mb-4">
-            Forecast
-          </h2>
+            <h2 className="text-xl font-semibold mt-10 mb-4">
+              Forecast
+            </h2>
 
-          <ChartComponent
-            title="Forecast"
-            data={dashboard?.forecast?.forecast?.map(item => ({
-              index: item.step,
-              value: item.predicted_value
-            }))}
-          />
+            <ChartComponent
+              type="line"
+              title="Forecast"
+              data={dashboard?.forecast?.forecast?.map(item => ({
+                index: item.step,
+                value: item.predicted_value
+              }))}
+            />
 
 
           {/* ANOMALY DETECTION */}
