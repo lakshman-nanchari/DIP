@@ -230,6 +230,13 @@ function DatasetPreviewPage() {
               className="bg-indigo-600 text-white px-6 py-3 rounded hover:bg-indigo-700"
             >
               Analyze Dataset
+            </button> 
+
+            <button
+              onClick={() => navigate(`/analytics/${dataset_id}/profile`)}
+              className="bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              View Profile
             </button>
 
           </div>

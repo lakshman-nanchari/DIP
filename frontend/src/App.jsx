@@ -8,6 +8,7 @@ import UploadDatasetPage from "./pages/UploadDatasetPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage"; 
 import DatasetPreviewPage from "./pages/DatasetPreviewPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import DatasetProfilePage from "./pages/DatasetProfilePage"
 
 function App() {
   return (
@@ -41,6 +42,14 @@ function App() {
           element={<DatasetPreviewPage />}
         />
 
+        <Route
+          path="/analytics/:dataset_id/profile"
+          element={
+            <ProtectedRoute>
+              <DatasetProfilePage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
 
     </BrowserRouter>
