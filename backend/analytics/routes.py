@@ -8,7 +8,7 @@ from core.dependencies import get_current_user
 from datasets.models import Dataset
 from datasets.services import load_dataset
 
-from analytics.services import generate_profile, generate_insights, generate_forecast, clean_dataset
+from analytics.services import generate_business_insights, generate_profile, generate_insights, generate_forecast, clean_dataset
 from analytics.services import generate_charts, generate_insights, generate_kpis, generate_dashboard, detect_anomalies
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -49,12 +49,11 @@ def dataset_profile(
             detail="Failed to analyze dataset"
         )
     
-
 @router.get("/{dataset_id}/insights")
 def dataset_insights(
     dataset_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ):
 
     dataset = db.execute(
@@ -65,19 +64,27 @@ def dataset_insights(
         raise HTTPException(status_code=404, detail="Dataset not found")
 
     try:
+
         df = load_dataset(dataset.file_path)
 
-        insights = generate_insights(df)
+        # statistical insights
+        statistical = generate_insights(df)
+
+        # business insights
+        business = generate_business_insights(df)
 
         return {
             "dataset_id": dataset_id,
-            "insights": insights
+            "summary": statistical.get("summary", {}),
+            "statistical_insights": statistical.get("insights", []),
+            "business_insights": business
         }
 
-    except RuntimeError:
+    except Exception as e:
+
         raise HTTPException(
             status_code=500,
-            detail="Failed to generate insights"
+            detail=f"Failed to generate insights: {str(e)}"
         )
     
 
@@ -174,38 +181,6 @@ def dataset_charts(
         raise HTTPException(
             status_code=500,
             detail="Failed to generate chart data"
-        ) 
-    
-
-@router.get("/{dataset_id}/insights")
-def dataset_insights(
-    dataset_id: int,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
-):
-
-    dataset = db.execute(
-        select(Dataset).where(Dataset.id == dataset_id)
-    ).scalar_one_or_none()
-
-    if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
-
-    try:
-
-        df = load_dataset(dataset.file_path)
-
-        insights = generate_insights(df)
-
-        return {
-            "dataset_id": dataset_id,
-            "analysis": insights
-        }
-
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to generate insights"
         ) 
     
 @router.get("/{dataset_id}/kpis")

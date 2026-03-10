@@ -321,19 +321,157 @@ def detect_anomalies(df):
         "anomalies": results[:10]
     }
 
+# BUSINESS INSIGHTS
+
+def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
+
+    insights = []
+
+    if df.empty:
+        return insights
+
+    numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
+    categorical_cols = df.select_dtypes(include=["object"]).columns.tolist()
+
+    # Remove ID-like columns
+    categorical_cols = [
+        col for col in categorical_cols
+        if not col.lower().endswith("id") and "id" not in col.lower()
+    ]
 
 
-# DASHBOARD GENERATOR
+    # DATASET SIZE INSIGHT
 
+    insights.append(
+        f"Dataset contains {df.shape[0]} records across {df.shape[1]} columns."
+    )
+
+
+    # DOMINANT CATEGORY INSIGHTS
+
+    for col in categorical_cols:
+
+        value_counts = df[col].value_counts(dropna=True)
+
+        if len(value_counts) == 0:
+            continue
+
+        top_value = value_counts.idxmax()
+        top_share = value_counts.max() / len(df)
+
+        if top_share > 0.4:
+            insights.append(
+                f"'{top_value}' dominates the '{col}' category ({round(top_share*100,1)}% of records)."
+            )
+
+
+    # NUMERIC RANGE INSIGHTS
+  
+    for col in numeric_cols:
+
+        min_val = df[col].min()
+        max_val = df[col].max()
+
+        if pd.isna(min_val) or pd.isna(max_val):
+            continue
+
+        insights.append(
+            f"'{col}' ranges from {round(min_val,2)} to {round(max_val,2)}."
+        )
+
+
+    # HIGH VARIANCE DETECTION
+  
+    for col in numeric_cols:
+
+        std = df[col].std()
+        mean = df[col].mean()
+
+        if mean == 0 or pd.isna(std):
+            continue
+
+        if std / mean > 1:
+            insights.append(
+                f"'{col}' shows high variability relative to its average."
+            )
+
+
+    # CATEGORY PERFORMANCE VS NUMERIC
+  
+    for cat in categorical_cols:
+
+        if df[cat].nunique() > 20:
+            continue
+
+        for num in numeric_cols:
+
+            grouped = df.groupby(cat)[num].mean()
+
+            if len(grouped) == 0:
+                continue
+
+            best_category = grouped.idxmax()
+            best_value = grouped.max()
+
+            insights.append(
+                f"{best_category} has the highest average {num} ({round(best_value,2)})."
+            )
+
+    # CORRELATION INSIGHTS
+ 
+    if len(numeric_cols) > 1:
+
+        corr_matrix = df[numeric_cols].corr()
+
+        for i in range(len(corr_matrix.columns)):
+            for j in range(i + 1, len(corr_matrix.columns)):
+
+                col1 = corr_matrix.columns[i]
+                col2 = corr_matrix.columns[j]
+
+                corr_val = corr_matrix.iloc[i, j]
+
+                if abs(corr_val) > 0.65:
+
+                    direction = "positive" if corr_val > 0 else "negative"
+
+                    insights.append(
+                        f"{col1} and {col2} show strong {direction} correlation ({round(corr_val,2)})."
+                    )
+
+    # LIMIT TOTAL INSIGHTS
+
+    insights = insights[:max_insights]
+
+    return insights   
+
+
+# DASHBOARD GENERATION
 
 def generate_dashboard(df):
 
     dashboard = {}
 
+    # KPIs
     dashboard["kpis"] = generate_kpis(df)
+
+    # Charts
     dashboard["charts"] = generate_charts(df)
-    dashboard["insights"] = generate_insights(df)
+
+    # Forecast
     dashboard["forecast"] = generate_forecast(df)
+
+    # Anomalies
     dashboard["anomalies"] = detect_anomalies(df)
+
+    # Insights
+    statistical = generate_insights(df)
+    business = generate_business_insights(df)
+
+    dashboard["insights"] = {
+        "summary": statistical.get("summary", {}),
+        "statistical_insights": statistical.get("insights", []),
+        "business_insights": business
+    }
 
     return dashboard
