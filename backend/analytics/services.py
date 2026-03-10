@@ -254,21 +254,33 @@ def generate_charts(df):
 
 def generate_kpis(df):
 
-    numeric_df = df.select_dtypes(include=["number"])
-
-    if numeric_df.empty:
-        raise RuntimeError("No numeric columns available for KPI generation")
-
     kpis = {}
 
-    for col in numeric_df.columns:
-        kpis[f"average_{col}"] = round(df[col].mean(), 2)
+    numeric_cols = df.select_dtypes(include=["number"]).columns
+    categorical_cols = df.select_dtypes(include=["object"]).columns
 
+    if len(numeric_cols) == 0:
+        raise RuntimeError("No numeric columns available for KPI generation")
+
+    # Averages for numeric columns
+    for col in numeric_cols:
+        kpis[f"avg_{col}"] = round(df[col].mean(), 2)
+
+    # Sums for important business columns
+    for col in numeric_cols:
+        if any(word in col.lower() for word in ["sales", "revenue", "amount", "profit"]):
+            kpis[f"total_{col}"] = round(df[col].sum(), 2)
+
+    # Unique counts for IDs
+    for col in df.columns:
+        if "id" in col.lower():
+            kpis[f"unique_{col}"] = int(df[col].nunique())
+
+    # Dataset metadata
     kpis["total_rows"] = int(df.shape[0])
     kpis["total_columns"] = int(df.shape[1])
 
     return kpis
-
 
 
 # FORECASTING

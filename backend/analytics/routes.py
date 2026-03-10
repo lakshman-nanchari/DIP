@@ -192,7 +192,10 @@ def dataset_kpis(
 ):
 
     dataset = db.execute(
-        select(Dataset).where(Dataset.id == dataset_id)
+        select(Dataset).where(
+            Dataset.id == dataset_id,
+            Dataset.user_id == current_user.id
+        )
     ).scalar_one_or_none()
 
     if not dataset:
@@ -217,11 +220,11 @@ def dataset_kpis(
             detail=str(e)
         )
 
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail="Failed to generate KPIs"
-        ) 
+            detail=f"Failed to generate KPIs: {str(e)}"
+        )
     
 @router.get("/{dataset_id}/dashboard") 
 def dataset_dashboard( 
@@ -245,6 +248,7 @@ def dataset_dashboard(
 
         return {
             "dataset_id": dataset_id,
+            "dataset_name": dataset.name,
             "dashboard": dashboard
         }
 
