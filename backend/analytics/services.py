@@ -75,7 +75,13 @@ def generate_profile(df: pd.DataFrame):
 
 def clean_dataset(df):
 
+    df = df.copy()
+
     report = {}
+
+    # Convert numeric-like strings to numbers
+    for col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors="ignore")
 
     # Remove duplicates
     before = len(df)
@@ -109,7 +115,7 @@ def clean_dataset(df):
             filled_values += int(missing)
 
     # Datetime columns
-    datetime_cols = df.select_dtypes(include=["datetime"]).columns
+    datetime_cols = df.select_dtypes(include=["datetime64"]).columns
 
     for col in datetime_cols:
 
