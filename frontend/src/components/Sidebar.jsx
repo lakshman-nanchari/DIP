@@ -16,7 +16,7 @@ function Sidebar() {
   };
 
   return (
-    <div className="w-64 bg-gray-900 text-white min-h-screen flex flex-col">
+    <div className="w-64 bg-stone-800 text-stone-200 backdrop-blur-xl border-r border-stone-800 min-h-screen flex flex-col">
 
       {/* Logo */}
       <div className="p-6 border-b border-gray-800">
@@ -33,8 +33,8 @@ function Sidebar() {
           className={({ isActive }) =>
             `flex items-center gap-3 p-3 rounded transition ${
               isActive
-                ? "bg-indigo-600"
-                : "hover:bg-gray-800"
+                ? "bg-violet-600/20"
+                : "hover:bg-slate-800"
             }`
           }
         >
@@ -47,8 +47,8 @@ function Sidebar() {
           className={({ isActive }) =>
             `flex items-center gap-3 p-3 rounded transition ${
               isActive
-                ? "bg-indigo-600"
-                : "hover:bg-gray-800"
+                ? "bg-violet-600/20"
+                : "hover:bg-slate-800"
             }`
           }
         >
@@ -61,8 +61,8 @@ function Sidebar() {
           className={({ isActive }) =>
             `flex items-center gap-3 p-3 rounded transition ${
               isActive
-                ? "bg-indigo-600"
-                : "hover:bg-gray-800"
+                ? "bg-indigo-600/20"
+                : "hover:bg-slate-800"
             }`
           }
         >

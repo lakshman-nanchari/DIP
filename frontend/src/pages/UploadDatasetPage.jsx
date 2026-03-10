@@ -53,7 +53,7 @@ function UploadDatasetPage() {
   };
 
   return (
-    <div className="flex">
+    <div className="flex bg-stone-100 min-h-screen text-stone-800">
 
       <Sidebar />
 

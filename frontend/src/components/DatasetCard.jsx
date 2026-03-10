@@ -28,7 +28,7 @@ function DatasetCard({ dataset, refreshDatasets }) {
   };
 
   return (
-    <div className="bg-white shadow rounded p-4 hover:shadow-lg transition">
+    <div className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
 
       <h3 className="text-lg font-semibold">
         {dataset.name}
@@ -41,27 +41,30 @@ function DatasetCard({ dataset, refreshDatasets }) {
       <p className="text-sm text-gray-400 mt-2">
         Uploaded: {new Date(dataset.created_at).toLocaleString()}
       </p>
+      <div className="flex flex-col gap-3 mt-4">
 
-      <button
-        onClick={() => navigate(`/datasets/${dataset.id}/preview`)}
-        className="mt-4 w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700"
-      >
-        Preview Dataset
-      </button>
+        <button
+          onClick={() => navigate(`/datasets/${dataset.id}/preview`)}
+          className="bg-amber-600 text-white py-2 rounded-lg hover:bg-amber-700 transition"
+        >
+          Preview Dataset
+        </button>
 
-      <button
-        onClick={() => navigate(`/analytics/${dataset.id}`)}
-        className="mt-2 w-full bg-green-600 text-white p-2 rounded hover:bg-green-700"
-      >
-        Analyze Dataset
-      </button>
+        <button
+          onClick={() => navigate(`/analytics/${dataset.id}`)}
+          className="bg-stone-800 text-white py-2 rounded-lg hover:bg-stone-900 transition"
+        >
+          Analyze Dataset
+        </button>
 
-      <button
-        onClick={deleteDataset}
-        className="mt-2 w-full bg-red-600 text-white p-2 rounded hover:bg-red-700"
-      >
-        Delete Dataset
-      </button>
+        <button
+          onClick={deleteDataset}
+          className="border border-red-400 text-red-600 py-2 rounded-lg hover:bg-red-50 transition"
+        >
+          Delete Dataset
+        </button>
+
+      </div>
 
     </div>
   );

@@ -1,117 +1,127 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import API from "../api/axios";
 
 function SignupPage() {
 
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    full_name: "",
-    role: "analyst",
-    organization: ""
+  const [form,setForm] = useState({
+    full_name:"",
+    email:"",
+    password:"",
+    organization:"",
+    role:"analyst"
   });
 
   const handleChange = (e) => {
-
-    setFormData({
-      ...formData,
+    setForm({
+      ...form,
       [e.target.name]: e.target.value
     });
-
   };
 
-  const handleSubmit = async (e) => {
+  const handleSignup = async (e) => {
 
     e.preventDefault();
 
     try {
 
-      await API.post("/users/", formData);
+      await API.post("/users", form);
 
-      alert("Account created successfully");
+      alert("Account created");
 
-      navigate("/login");
+      navigate("/");
 
-    } catch (err) {
-
-      console.error(err);
-
+    } catch {
       alert("Signup failed");
-
     }
 
   };
 
   return (
 
-    <div className="flex items-center justify-center h-screen bg-gray-100">
+    <div className="flex min-h-screen">
 
-      <div className="bg-white p-8 shadow rounded w-96">
+      {/* LEFT SIDE BRAND */}
 
-        <h2 className="text-xl font-bold mb-6 text-center">
-          Create Account
-        </h2>
+      <div className="w-1/2 bg-stone-900 text-white flex flex-col justify-center items-center p-12">
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <h1 className="text-4xl font-bold mb-6">
+          Data Intelligence
+        </h1>
+
+        <p className="text-stone-300 text-lg text-center max-w-md">
+          Build dashboards, generate insights, forecast trends and detect
+          anomalies from your datasets automatically.
+        </p>
+
+      </div>
+
+
+      {/* RIGHT SIDE FORM */}
+
+      <div className="w-1/2 flex items-center justify-center bg-stone-100">
+
+        <form
+          onSubmit={handleSignup}
+          className="bg-white border border-stone-200 p-10 rounded-xl shadow-md w-96"
+        >
+
+          <h2 className="text-2xl font-bold mb-6 text-stone-800">
+            Create Account
+          </h2>
 
           <input
-            type="text"
             name="full_name"
             placeholder="Full Name"
-            value={formData.full_name}
             onChange={handleChange}
-            className="w-full border rounded p-2"
-            required
+            className="w-full mb-4 p-3 border border-stone-300 rounded focus:ring-2 focus:ring-amber-500 outline-none"
           />
 
           <input
-            type="email"
             name="email"
             placeholder="Email"
-            value={formData.email}
             onChange={handleChange}
-            className="w-full border rounded p-2"
-            required
+            className="w-full mb-4 p-3 border border-stone-300 rounded focus:ring-2 focus:ring-amber-500 outline-none"
           />
 
           <input
             type="password"
             name="password"
             placeholder="Password"
-            value={formData.password}
             onChange={handleChange}
-            className="w-full border rounded p-2"
-            required
+            className="w-full mb-4 p-3 border border-stone-300 rounded focus:ring-2 focus:ring-amber-500 outline-none"
           />
 
           <input
-            type="text"
             name="organization"
             placeholder="Organization"
-            value={formData.organization}
             onChange={handleChange}
-            className="w-full border rounded p-2"
+            className="w-full mb-4 p-3 border border-stone-300 rounded focus:ring-2 focus:ring-amber-500 outline-none"
           />
 
           <select
             name="role"
-            value={formData.role}
             onChange={handleChange}
-            className="w-full border rounded p-2"
+            className="w-full mb-6 p-3 border border-stone-300 rounded focus:ring-2 focus:ring-amber-500 outline-none"
           >
             <option value="analyst">Analyst</option>
             <option value="admin">Admin</option>
           </select>
 
           <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700"
+            className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded transition"
           >
             Sign Up
           </button>
+
+          <p className="text-sm text-center mt-4 text-stone-600">
+            Already have an account?{" "}
+            <Link to="/" className="text-amber-600 hover:underline">
+              Login
+            </Link>
+          </p>
 
         </form>
 

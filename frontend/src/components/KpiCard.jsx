@@ -8,13 +8,13 @@ function KpiCard({ title, value }) {
   };
 
   return (
-    <div className="bg-white shadow rounded p-6">
+    <div className="bg-white/80 backdrop-blur border border-stone-200 rounded-xl p-6 shadow-sm hover:shadow-lg transition">
 
-      <h3 className="text-sm text-gray-500 mb-2">
+      <h3 className="text-stone-500 text-sm mb-2">
         {title}
       </h3>
 
-      <p className="text-2xl font-bold text-indigo-600">
+      <p className="text-2xl font-bold text-amber-600">
         {formatValue(value)}
       </p>
 

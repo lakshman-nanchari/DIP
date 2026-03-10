@@ -51,7 +51,10 @@ function DashboardHome() {
 
   return (
 
-    <div className="flex">
+    <div className="flex min-h-screen text-stone-800 bg-linear-to-br
+  from-stone-100
+  via-stone-50
+  to-stone-200">
 
       <Sidebar />
 
@@ -61,13 +64,17 @@ function DashboardHome() {
 
         <div className="p-8">
 
-          <h1 className="text-2xl font-bold mb-6">
-            Dashboard
+          <h1 className="text-3xl font-semibold mb-2">
+          Dashboard
           </h1>
+
+          <p className="text-stone-500 mb-8">
+          Monitor your datasets and analytics insights
+          </p>
 
           {/* KPI SECTION */}
 
-          <div className="grid grid-cols-4 gap-6 mb-10">
+          <div className="grid grid-cols-4 gap-6 mb-12">
 
             <KpiCard
               title="Datasets Uploaded"
@@ -98,13 +105,13 @@ function DashboardHome() {
 
             <div
               onClick={() => navigate("/datasets")}
-              className="bg-white shadow rounded p-6 cursor-pointer hover:shadow-md"
+              className="bg-white border border-stone-200 rounded-xl p-6 cursor-pointer hover:shadow-md hover:bg-stone-50 transition"
             >
-              <h3 className="text-gray-500 text-sm mb-2">
+              <h3 className="text-stone-500 text-sm mb-2">
                 Manage Datasets
               </h3>
 
-              <p className="text-lg font-semibold text-indigo-600">
+              <p className="text-lg font-semibold text-amber-600">
                 View Uploaded Datasets
               </p>
             </div>
@@ -112,13 +119,13 @@ function DashboardHome() {
 
             <div
               onClick={() => navigate("/upload-dataset")}
-              className="bg-white shadow rounded p-6 cursor-pointer hover:shadow-md"
+              className="bg-white border border-stone-200 rounded-xl p-6 cursor-pointer hover:shadow-md hover:bg-stone-50 transition"
             >
-              <h3 className="text-gray-500 text-sm mb-2">
+              <h3 className="text-stone-500 text-sm mb-2">
                 Upload Data
               </h3>
 
-              <p className="text-lg font-semibold text-indigo-600">
+              <p className="text-lg font-semibold text-amber-600">
                 Upload New Dataset
               </p>
             </div>
@@ -126,13 +133,13 @@ function DashboardHome() {
 
             <div
               onClick={() => navigate("/datasets")}
-              className="bg-white shadow rounded p-6 cursor-pointer hover:shadow-md"
+              className="bg-white border border-stone-200 rounded-xl p-6 cursor-pointer hover:shadow-md hover:bg-stone-50 transition"
             >
-              <h3 className="text-gray-500 text-sm mb-2">
+              <h3 className="text-stone-500 text-sm mb-2">
                 Start Analytics
               </h3>
 
-              <p className="text-lg font-semibold text-indigo-600">
+              <p className="text-lg font-semibold text-amber-600">
                 Analyze Dataset
               </p>
             </div>
