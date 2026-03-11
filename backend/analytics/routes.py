@@ -81,10 +81,18 @@ def dataset_insights(
         raise HTTPException(status_code=404, detail="Dataset not found")
 
     try:
+
         df = load_dataset(dataset.file_path)
 
         statistical = generate_insights(df)
         business = generate_business_insights(df)
+
+        # Safety checks
+        if not isinstance(statistical, dict):
+            statistical = {"summary": {}, "insights": []}
+
+        if not isinstance(business, list):
+            business = []
 
         return {
             "dataset_id": dataset_id,

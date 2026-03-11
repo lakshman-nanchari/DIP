@@ -514,7 +514,6 @@ def detect_anomalies(df):
     }
 
 # BUSINESS INSIGHTS
-
 def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
 
     insights = []
@@ -525,26 +524,24 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
     numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
     categorical_cols = df.select_dtypes(include=["object"]).columns.tolist()
 
-    # Remove ID-like columns
+    # Remove ID-like categorical columns
     categorical_cols = [
         col for col in categorical_cols
         if not col.lower().endswith("id") and "id" not in col.lower()
     ]
-
 
     # DATASET SIZE INSIGHT
 
     total_rows = df.shape[0]
     total_cols = df.shape[1]
 
-    numeric_cols = df.select_dtypes(include=["number"]).shape[1]
-    categorical_cols = df.select_dtypes(include=["object"]).shape[1]
+    num_numeric = len(numeric_cols)
+    num_categorical = len(categorical_cols)
 
     insights.append(
         f"Dataset contains {total_rows} records and {total_cols} columns "
-        f"({numeric_cols} numeric, {categorical_cols} categorical)."
+        f"({num_numeric} numeric, {num_categorical} categorical)."
     )
-
 
     # DOMINANT CATEGORY INSIGHTS
 
@@ -563,13 +560,14 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
                 f"'{top_value}' dominates the '{col}' category ({round(top_share*100,1)}% of records)."
             )
 
-
     # NUMERIC RANGE INSIGHTS
-  
+
     for col in numeric_cols:
 
-        min_val = df[col].min()
-        max_val = df[col].max()
+        series = pd.to_numeric(df[col], errors="coerce")
+
+        min_val = series.min()
+        max_val = series.max()
 
         if pd.isna(min_val) or pd.isna(max_val):
             continue
@@ -578,13 +576,14 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
             f"'{col}' ranges from {round(min_val,2)} to {round(max_val,2)}."
         )
 
-
     # HIGH VARIANCE DETECTION
-  
+
     for col in numeric_cols:
 
-        std = df[col].std()
-        mean = df[col].mean()
+        series = pd.to_numeric(df[col], errors="coerce")
+
+        std = series.std()
+        mean = series.mean()
 
         if mean == 0 or pd.isna(std):
             continue
@@ -594,9 +593,8 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
                 f"'{col}' shows high variability relative to its average."
             )
 
-
     # CATEGORY PERFORMANCE VS NUMERIC
-  
+
     for cat in categorical_cols:
 
         if df[cat].nunique() > 20:
@@ -617,10 +615,10 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
             )
 
     # CORRELATION INSIGHTS
- 
+
     if len(numeric_cols) > 1:
 
-        corr_matrix = df[numeric_cols].corr()
+        corr_matrix = df[numeric_cols].corr(numeric_only=True)
 
         for i in range(len(corr_matrix.columns)):
             for j in range(i + 1, len(corr_matrix.columns)):
@@ -638,11 +636,9 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
                         f"{col1} and {col2} show strong {direction} correlation ({round(corr_val,2)})."
                     )
 
-    # LIMIT TOTAL INSIGHTS
-
     insights = insights[:max_insights]
 
-    return insights   
+    return insights
 
 
 # DASHBOARD GENERATION
