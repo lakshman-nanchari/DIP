@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from core.database import engine, Base
 from core.dependencies import get_current_user
@@ -12,10 +13,21 @@ from datasets.routes import router as dataset_router
 from analytics.routes import router as analytics_router
 
 
+# Lifespan event (replaces deprecated on_event)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    Base.metadata.create_all(bind=engine)
+    yield
+    # Shutdown (optional cleanup)
+
+
 app = FastAPI(
     title="Unified Data Intelligence & Forecasting Platform",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
+
 
 # CORS configuration
 origins = [
@@ -31,13 +43,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
 
 # Register routers
 app.include_router(user_router)
 app.include_router(dataset_router)
 app.include_router(analytics_router)
+
 
 # Global exception handler
 @app.exception_handler(Exception)
@@ -49,6 +60,12 @@ async def catch_all_exceptions(request: Request, exc: Exception):
 @app.get("/")
 def root():
     return {"status": "Backend running safely"}
+
+
+# Health check (useful for Render)
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
 
 
 # Any authenticated user
