@@ -5,7 +5,8 @@ from core.config import DATABASE_URL
 # create engine
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    connect_args={"sslmode": "require"}  # required for Supabase
 )
 
 # session factory
