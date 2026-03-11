@@ -1,14 +1,17 @@
 import os
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
+import uuid
+
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+
 from core.database import SessionLocal
 from core.dependencies import get_current_user
 from auth.models import User
 
 from datasets.models import Dataset
 from datasets.schemas import DatasetResponse
-from datasets.services import load_dataset, dataset_summary,dataset_preview
+from datasets.services import load_dataset, dataset_summary, dataset_preview
 
 
 router = APIRouter(prefix="/datasets", tags=["Datasets"])
@@ -29,11 +32,12 @@ def get_db():
 @router.post("/upload", response_model=DatasetResponse)
 async def upload_dataset(
     file: UploadFile = File(...),
+    dataset_name: str | None = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
 
-    filename = file.filename
+    filename = dataset_name if dataset_name else file.filename
 
     if not filename.endswith((".csv", ".xlsx", ".xls")):
         raise HTTPException(
@@ -41,7 +45,9 @@ async def upload_dataset(
             detail="Only CSV or Excel files are allowed"
         )
 
-    file_path = os.path.join(UPLOAD_DIR, filename)
+    # Prevent overwrite using UUID
+    unique_name = f"{uuid.uuid4()}_{filename}"
+    file_path = os.path.join(UPLOAD_DIR, unique_name)
 
     try:
         with open(file_path, "wb") as buffer:
