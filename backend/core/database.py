@@ -2,19 +2,19 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from core.config import DATABASE_URL
 
-# create engine
+# Create database engine
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    connect_args={"sslmode": "require"}  # required for Supabase
+    connect_args={"sslmode": "require"}  # Required for Supabase
 )
 
-# session factory
+# Session factory
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine
 )
 
-# base model
+# Base model class
 Base = declarative_base()
