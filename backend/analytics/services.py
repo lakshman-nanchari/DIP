@@ -174,42 +174,83 @@ def generate_insights(df):
 
     numeric_df = df.select_dtypes(include=["number"])
 
+    # Remove ID-like columns
+    numeric_df = numeric_df[
+        [col for col in numeric_df.columns if "id" not in col.lower()]
+    ]
+
+    # Clean invalid values
+    numeric_df = numeric_df.replace([np.inf, -np.inf], np.nan)
+
     summary = {
-        "rows": df.shape[0],
-        "columns": df.shape[1]
+        "rows": int(df.shape[0]),
+        "columns": int(df.shape[1])
     }
 
-    # Correlation insights
+    # CORRELATION INSIGHTS
     if len(numeric_df.columns) > 1:
 
-        corr_matrix = numeric_df.corr()
+        corr_matrix = numeric_df.corr(numeric_only=True)
+
+        checked_pairs = set()
 
         for col in corr_matrix.columns:
             for idx in corr_matrix.index:
 
-                if col != idx and abs(corr_matrix.loc[col, idx]) > 0.8:
+                if col == idx:
+                    continue
+
+                pair = tuple(sorted([col, idx]))
+
+                if pair in checked_pairs:
+                    continue
+
+                corr_val = corr_matrix.loc[col, idx]
+
+                if abs(corr_val) > 0.8:
+
+                    direction = "positive" if corr_val > 0 else "negative"
 
                     insights.append(
-                        f"{col} has strong correlation with {idx} ({round(corr_matrix.loc[col, idx],2)})"
+                        f"{col} and {idx} show strong {direction} correlation ({round(corr_val,2)})."
                     )
 
-    # Outlier detection
+                    checked_pairs.add(pair)
+
+    # OUTLIER DETECTION
     for col in numeric_df.columns:
 
-        mean = numeric_df[col].mean()
-        std = numeric_df[col].std()
+        series = pd.to_numeric(numeric_df[col], errors="coerce").dropna()
 
-        outliers = numeric_df[
-            (numeric_df[col] > mean + 3 * std) |
-            (numeric_df[col] < mean - 3 * std)
+        if len(series) < 5:
+            continue
+
+        mean = series.mean()
+        std = series.std()
+
+        outliers = series[
+            (series > mean + 3 * std) |
+            (series < mean - 3 * std)
         ]
 
         if len(outliers) > 0:
-            insights.append(f"Column {col} contains {len(outliers)} potential outliers")
 
-    # Average values
-    for col in numeric_df.columns:
-        insights.append(f"Average {col} is {round(numeric_df[col].mean(),2)}")
+            percentage = (len(outliers) / len(series)) * 100
+
+            insights.append(
+                f"{len(outliers)} outliers detected in '{col}' ({round(percentage,1)}% of data)."
+            )
+
+    # AVERAGE VALUES
+    for col in numeric_df.columns[:5]:   # limit to avoid too many insights
+
+        value = numeric_df[col].mean()
+
+        if not pd.isna(value):
+
+            insights.append(
+                f"Average {col} is {round(value,2)}."
+            )
 
     return {
         "summary": summary,
@@ -224,7 +265,11 @@ def generate_charts(df):
     charts = {}
 
     numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
-    categorical_cols = df.select_dtypes(include=["object"]).columns.tolist()
+
+    categorical_cols = [
+        col for col in df.select_dtypes(include=["object"]).columns
+        if "id" not in col.lower()
+    ]
 
     # HISTOGRAMS
     histograms = {}
@@ -233,7 +278,15 @@ def generate_charts(df):
 
         for col in numeric_cols[:4]:
 
-            values = pd.to_numeric(df[col], errors="coerce").dropna().values
+            values = pd.to_numeric(df[col], errors="coerce")
+
+            # Remove invalid values
+            values = values.replace([np.inf, -np.inf], np.nan).dropna()
+
+            if len(values) > 10000:
+                values = values.sample(10000)
+
+            values = values.values
 
             if len(values) == 0:
                 continue
@@ -241,7 +294,7 @@ def generate_charts(df):
             try:
                 counts, bins = np.histogram(values, bins=10)
             except Exception:
-                    continue
+                continue
 
             histograms[col] = {
                 "labels": [round(b, 2) for b in bins[:-1]],
@@ -250,7 +303,6 @@ def generate_charts(df):
 
     charts["histograms"] = histograms
 
-
     # BAR CHARTS
     bars = {}
 
@@ -258,36 +310,54 @@ def generate_charts(df):
 
         for col in categorical_cols[:3]:
 
-            counts = df[col].value_counts().head(10)
+            try:
 
-            bars[col] = {
-                "labels": counts.index.tolist(),
-                "values": counts.values.tolist()
-            }
+                counts = df[col].astype(str).value_counts().head(10)
+
+                bars[col] = {
+                    "labels": counts.index.tolist(),
+                    "values": counts.values.tolist()
+                }
+
+            except Exception:
+                continue
 
     charts["bars"] = bars
-
 
     # CORRELATION MATRIX
     if len(numeric_cols) > 1:
 
-        corr = df[numeric_cols].corr()
+        try:
 
-        if not corr.empty:
-            charts["correlation_matrix"] = corr.fillna(0).to_dict()
+            corr = df[numeric_cols].corr(numeric_only=True)
 
+            if not corr.empty:
+                charts["correlation_matrix"] = corr.fillna(0).to_dict()
+
+        except Exception:
+            pass
 
     # TREND
     if numeric_cols:
 
-        target = next(
-            (c for c in numeric_cols if "price" in c.lower() or "sales" in c.lower()),
-            numeric_cols[0]
-        )
+        priority_keywords = ["sales", "revenue", "amount", "price", "profit"]
+
+        target = None
+
+        for col in numeric_cols:
+            if any(k in col.lower() for k in priority_keywords):
+                target = col
+                break
+
+        if target is None:
+            target = numeric_cols[0]
+
+        values = pd.to_numeric(df[target], errors="coerce")
+        values = values.replace([np.inf, -np.inf], np.nan).dropna()
 
         charts["trend"] = {
             "column": target,
-            "values": pd.to_numeric(df[target], errors="coerce").dropna().tolist()[:1000]
+            "values": values.head(300).tolist()
         }
 
     return charts
@@ -334,7 +404,6 @@ def generate_kpis(df):
 
 # FORECASTING
 
-
 def generate_forecast(df, steps: int = 5):
 
     numeric_df = df.select_dtypes(include=["number"])
@@ -342,13 +411,32 @@ def generate_forecast(df, steps: int = 5):
     if numeric_df.empty:
         raise RuntimeError("No numeric column available for forecasting")
 
-    # Select most important numeric column
-    target_col = numeric_df.mean().idxmax()
+    # Remove invalid values
+    numeric_df = numeric_df.replace([np.inf, -np.inf], np.nan)
 
-    series = numeric_df[target_col].dropna()
+    # Prefer meaningful business columns
+    priority_keywords = ["sales", "revenue", "amount", "price", "profit"]
+
+    target_col = None
+
+    for col in numeric_df.columns:
+        if any(k in col.lower() for k in priority_keywords):
+            target_col = col
+            break
+
+    # Fallback: choose column with highest variance (better than mean)
+    if target_col is None:
+        variances = numeric_df.var().sort_values(ascending=False)
+        target_col = variances.index[0]
+
+    series = pd.to_numeric(numeric_df[target_col], errors="coerce").dropna()
 
     if len(series) < 5:
         raise RuntimeError("Not enough data for forecasting")
+
+    # Avoid forecasting constant data
+    if series.nunique() < 2:
+        raise RuntimeError("Forecasting failed: data has no variation")
 
     try:
         trend = np.polyfit(range(len(series)), series, 1)
@@ -371,7 +459,6 @@ def generate_forecast(df, steps: int = 5):
         "target_column": target_col,
         "forecast": predictions
     }
-
 
 
 # ANOMALY DETECTION
@@ -447,8 +534,15 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
 
     # DATASET SIZE INSIGHT
 
+    total_rows = df.shape[0]
+    total_cols = df.shape[1]
+
+    numeric_cols = df.select_dtypes(include=["number"]).shape[1]
+    categorical_cols = df.select_dtypes(include=["object"]).shape[1]
+
     insights.append(
-        f"Dataset contains {df.shape[0]} records across {df.shape[1]} columns."
+        f"Dataset contains {total_rows} records and {total_cols} columns "
+        f"({numeric_cols} numeric, {categorical_cols} categorical)."
     )
 
 
