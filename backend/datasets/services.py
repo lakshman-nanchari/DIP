@@ -24,7 +24,6 @@ def load_dataset(file_path: str):
 
         # CLEAN COLUMN NAMES
 
-
         df.columns = (
             df.columns
             .str.strip()
@@ -38,25 +37,34 @@ def load_dataset(file_path: str):
 
             if df[col].dtype == "object":
 
-                converted = pd.to_numeric(df[col], errors="ignore")
+                converted = pd.to_numeric(df[col], errors="coerce")
 
-                if pd.api.types.is_numeric_dtype(converted):
+                # Only replace if conversion actually produced numbers
+                if converted.notna().sum() > 0:
                     df[col] = converted
 
         # DETECT DATETIME COLUMNS
-        
+
         for col in df.columns:
 
-            try:
-                parsed = pd.to_datetime(df[col], errors="ignore")
+            if df[col].dtype == "object":
 
-                if pd.api.types.is_datetime64_any_dtype(parsed):
-                    df[col] = parsed
+                try:
+                    parsed = pd.to_datetime(
+                        df[col],
+                        errors="coerce",
+                        infer_datetime_format=True
+                    )
 
-            except Exception:
-                pass
+                    # Only convert if at least some values were parsed
+                    if parsed.notna().sum() > 0:
+                        df[col] = parsed
+
+                except Exception:
+                    pass
 
         # REMOVE INFINITE VALUES
+
         df = df.replace([np.inf, -np.inf], np.nan)
 
         # PROTECT AGAINST HUGE DATASETS
