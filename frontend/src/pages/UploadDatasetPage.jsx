@@ -44,6 +44,12 @@ function UploadDatasetPage() {
       setDatasetName("");
       setFile(null);
 
+      // Reset file input element
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) {
+        fileInput.value = "";
+      }
+
       fetchDatasets();
 
     } catch (err) {
@@ -87,7 +93,7 @@ function UploadDatasetPage() {
 
               <input
                 type="file"
-                accept=".csv,.xlsx"
+                accept=".csv,.xlsx,.xls"
                 className="block w-full mt-2 border p-2 rounded bg-white"
                 onChange={(e) => setFile(e.target.files[0])}
               />
