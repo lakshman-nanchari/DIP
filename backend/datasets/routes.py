@@ -1,5 +1,6 @@
 import os
 import uuid
+import shutil
 
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -39,19 +40,24 @@ async def upload_dataset(
 
     filename = dataset_name if dataset_name else file.filename
 
-    if not filename.endswith((".csv", ".xlsx", ".xls")):
+    # Validate using uploaded file extension
+    uploaded_filename = file.filename.lower()
+
+    if not uploaded_filename.endswith((".csv", ".xlsx", ".xls")):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only CSV or Excel files are allowed"
         )
 
     # Prevent overwrite using UUID
-    unique_name = f"{uuid.uuid4()}_{filename}"
+    unique_name = f"{uuid.uuid4()}_{file.filename}"
     file_path = os.path.join(UPLOAD_DIR, unique_name)
 
     try:
+
+        # Save file safely
         with open(file_path, "wb") as buffer:
-            buffer.write(await file.read())
+            shutil.copyfileobj(file.file, buffer)
 
         df = load_dataset(file_path)
 
@@ -60,7 +66,7 @@ async def upload_dataset(
         dataset = Dataset(
             name=filename,
             file_path=file_path,
-            file_type=filename.split(".")[-1],
+            file_type=uploaded_filename.split(".")[-1],
             uploaded_by=current_user.id,
             rows=summary["rows"],
             columns=summary["columns"]
@@ -77,31 +83,39 @@ async def upload_dataset(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Dataset processing failed"
         )
-    
+
+
 @router.get("/{dataset_id}/preview")
 def preview_dataset(
     dataset_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
+
     dataset = db.execute(
         select(Dataset).where(Dataset.id == dataset_id)
     ).scalar_one_or_none()
 
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
-    
+
+    # Check if dataset file exists
+    if not os.path.exists(dataset.file_path):
+        raise HTTPException(status_code=404, detail="Dataset file missing")
+
     try:
         df = load_dataset(dataset.file_path)
         preview = dataset_preview(df)
-        return preview 
-    
+
+        return preview
+
     except RuntimeError:
         raise HTTPException(
             status_code=500,
             detail="Failed to generate dataset preview"
-        ) 
-    
+        )
+
+
 @router.get("/", response_model=list[DatasetResponse])
 def list_datasets(
     db: Session = Depends(get_db),
@@ -112,7 +126,7 @@ def list_datasets(
         Dataset.uploaded_by == current_user.id
     ).all()
 
-    return datasets 
+    return datasets
 
 
 @router.get("/{dataset_id}", response_model=DatasetResponse)
@@ -133,9 +147,7 @@ def get_dataset(
             detail="Dataset not found"
         )
 
-    return dataset  
-
-
+    return dataset
 
 
 @router.delete("/{dataset_id}")
@@ -167,6 +179,7 @@ def delete_dataset(
         return {"message": "Dataset deleted successfully"}
 
     except Exception:
+
         db.rollback()
 
         raise HTTPException(
