@@ -8,7 +8,7 @@ import KpiCard from "../components/KpiCard";
 import InsightsPanel from "../components/InsightsPanel";
 import ChartComponent from "../components/ChartComponent";
 import AnomalyTable from "../components/AnomalyTable";
-
+import Loader from "../components/Loader";
 import API from "../api/axios";
 
 function AnalyticsDashboardPage() {
@@ -53,13 +53,7 @@ function AnalyticsDashboardPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-stone-600">
-        <p className="text-lg font-semibold">
-          Loading Analytics Dashboard...
-        </p>
-      </div>
-    );
+    return <Loader />;
   }
 
   return (
