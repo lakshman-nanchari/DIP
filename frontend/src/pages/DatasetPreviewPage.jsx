@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
+import Loader from "../components/Loader";
 import API from "../api/axios";
 
 function DatasetPreviewPage() {
@@ -64,11 +65,7 @@ function DatasetPreviewPage() {
 
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-stone-600">
-        Loading Dataset Preview...
-      </div>
-    );
+    return <Loader />;
   }
 
   if (!preview) {
