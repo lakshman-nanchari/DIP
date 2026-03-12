@@ -35,7 +35,7 @@ app = FastAPI(
 # CORS configuration
 origins = [
     "http://localhost:5173",                  # local development
-    "https://data-intelligence.vercel.app"    # production frontend
+    "https://dip-analytics.vercel.app"    # production frontend
 ]
 
 app.add_middleware(
