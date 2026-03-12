@@ -4,12 +4,13 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import KpiCard from "../components/KpiCard";
-
+import DashboardSkeleton from "../components/DashboardSkeleton";
 import API from "../api/axios";
 
 function DashboardHome() {
 
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
+  const [loading, setLoading] = useState(true);
 
   const [stats, setStats] = useState({
     datasets: 0,
@@ -45,9 +46,19 @@ function DashboardHome() {
 
     } catch (err) {
       console.error("Failed to load dashboard stats", err);
+    } finally {
+      setLoading(false);
     }
 
   };
+
+  if (loading) {
+  return (
+    <div className="p-8">
+      <DashboardSkeleton />
+    </div>
+  );
+}
 
   return (
 
