@@ -1,10 +1,14 @@
 import axios from "axios";
+import NProgress from "nprogress";
 
 const API = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: import.meta.env.VITE_API_URL
 });
 
 API.interceptors.request.use((config) => {
+
+  NProgress.start();
+
   const token = localStorage.getItem("token");
 
   if (token) {
@@ -12,6 +16,25 @@ API.interceptors.request.use((config) => {
   }
 
   return config;
+
+}, (error) => {
+
+  NProgress.done();
+  return Promise.reject(error);
+
+});
+
+
+API.interceptors.response.use((response) => {
+
+  NProgress.done();
+  return response;
+
+}, (error) => {
+
+  NProgress.done();
+  return Promise.reject(error);
+
 });
 
 export default API;
