@@ -18,11 +18,15 @@ from analytics.services import (
     generate_charts,
     generate_kpis,
     generate_dashboard,
-    detect_anomalies
+    detect_anomalies,
+    cached_dashboard,
+    get_df_hash
 )
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
+
+# DB DEPENDENCY
 
 def get_db():
     db = SessionLocal()
@@ -32,67 +36,55 @@ def get_db():
         db.close()
 
 
+# HELPER 
+
+def get_user_dataset(dataset_id, db, user_id):
+    dataset = db.execute(
+        select(Dataset).where(
+            Dataset.id == dataset_id,
+            Dataset.uploaded_by == user_id
+        )
+    ).scalar_one_or_none()
+
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    return dataset
+
+
 # PROFILE
+
 @router.get("/{dataset_id}/profile")
 def dataset_profile(
     dataset_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
-    dataset = db.execute(
-        select(Dataset).where(
-            Dataset.id == dataset_id,
-            Dataset.uploaded_by == current_user.id
-        )
-    ).scalar_one_or_none()
-
-    if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+    dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
         df = load_dataset(dataset.file_path)
-        profile = generate_profile(df)
-        return profile
+        return generate_profile(df)
 
-    except RuntimeError:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to analyze dataset"
-        )
+    except Exception:
+        raise HTTPException(500, "Failed to analyze dataset")
 
 
 # INSIGHTS
+
 @router.get("/{dataset_id}/insights")
 def dataset_insights(
     dataset_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
-    dataset = db.execute(
-        select(Dataset).where(
-            Dataset.id == dataset_id,
-            Dataset.uploaded_by == current_user.id
-        )
-    ).scalar_one_or_none()
-
-    if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+    dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
-
         df = load_dataset(dataset.file_path)
 
         statistical = generate_insights(df)
         business = generate_business_insights(df)
-
-        # Safety checks
-        if not isinstance(statistical, dict):
-            statistical = {"summary": {}, "insights": []}
-
-        if not isinstance(business, list):
-            business = []
 
         return {
             "dataset_id": dataset_id,
@@ -102,68 +94,42 @@ def dataset_insights(
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate insights: {str(e)}"
-        )
-
+        raise HTTPException(500, f"Insights failed: {str(e)}")
 
 # FORECAST
+
 @router.get("/{dataset_id}/forecast")
 def dataset_forecast(
     dataset_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
-    dataset = db.execute(
-        select(Dataset).where(
-            Dataset.id == dataset_id,
-            Dataset.uploaded_by == current_user.id
-        )
-    ).scalar_one_or_none()
-
-    if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+    dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
         df = load_dataset(dataset.file_path)
 
-        forecast = generate_forecast(df)
-
         return {
             "dataset_id": dataset_id,
-            "forecast": forecast
+            "forecast": generate_forecast(df)
         }
 
     except RuntimeError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
+        raise HTTPException(400, str(e))
 
 
 # CLEAN DATASET
+
 @router.post("/{dataset_id}/clean")
 def clean_dataset_api(
     dataset_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
-    dataset = db.execute(
-        select(Dataset).where(
-            Dataset.id == dataset_id,
-            Dataset.uploaded_by == current_user.id
-        )
-    ).scalar_one_or_none()
-
-    if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+    dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
         df = load_dataset(dataset.file_path)
-
         cleaned_df, report = clean_dataset(df)
 
         if dataset.file_type == "csv":
@@ -177,29 +143,18 @@ def clean_dataset_api(
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+        raise HTTPException(500, str(e))
 
 
 # CHARTS
+
 @router.get("/{dataset_id}/charts")
 def dataset_charts(
     dataset_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
-    dataset = db.execute(
-        select(Dataset).where(
-            Dataset.id == dataset_id,
-            Dataset.uploaded_by == current_user.id
-        )
-    ).scalar_one_or_none()
-
-    if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+    dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
         df = load_dataset(dataset.file_path)
@@ -218,124 +173,79 @@ def dataset_charts(
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate chart data: {str(e)}"
-        )
+        raise HTTPException(500, f"Chart generation failed: {str(e)}")
 
 
-# KPIS
+# KPIs
+
 @router.get("/{dataset_id}/kpis")
 def dataset_kpis(
     dataset_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
-    dataset = db.execute(
-        select(Dataset).where(
-            Dataset.id == dataset_id,
-            Dataset.uploaded_by == current_user.id
-        )
-    ).scalar_one_or_none()
-
-    if not dataset:
-        raise HTTPException(
-            status_code=404,
-            detail="Dataset not found"
-        )
+    dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
         df = load_dataset(dataset.file_path)
 
-        kpis = generate_kpis(df)
-
         return {
             "dataset_id": dataset_id,
-            "kpis": kpis
+            "kpis": generate_kpis(df)
         }
 
     except RuntimeError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
+        raise HTTPException(400, str(e))
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate KPIs: {str(e)}"
-        )
+        raise HTTPException(500, f"KPI failed: {str(e)}")
 
 
 # ANOMALIES
+
 @router.get("/{dataset_id}/anomalies")
 def dataset_anomalies(
     dataset_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
-    dataset = db.execute(
-        select(Dataset).where(
-            Dataset.id == dataset_id,
-            Dataset.uploaded_by == current_user.id
-        )
-    ).scalar_one_or_none()
-
-    if not dataset:
-        raise HTTPException(
-            status_code=404,
-            detail="Dataset not found"
-        )
+    dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
         df = load_dataset(dataset.file_path)
 
-        anomalies = detect_anomalies(df)
-
         return {
             "dataset_id": dataset_id,
-            "anomaly_analysis": anomalies
+            "anomaly_analysis": detect_anomalies(df)
         }
 
     except RuntimeError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
+        raise HTTPException(400, str(e))
 
     except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to detect anomalies"
-        )
+        raise HTTPException(500, "Anomaly detection failed")
 
 
-# DASHBOARD
+# DASHBOARD (CACHED)
+
 @router.get("/{dataset_id}/dashboard")
 def dataset_dashboard(
     dataset_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-
-    dataset = db.execute(
-        select(Dataset).where(
-            Dataset.id == dataset_id,
-            Dataset.uploaded_by == current_user.id
-        )
-    ).scalar_one_or_none()
-
-    if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+    dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
         df = load_dataset(dataset.file_path)
 
-        dashboard = generate_dashboard(df)
+        #  CACHING
+        df_hash = get_df_hash(df)
+        df_json = df.to_json()
 
-        # Clean NaN values
+        dashboard = cached_dashboard(df_hash, df_json)
+
+        # Clean NaN
         def clean_nan(obj):
             if isinstance(obj, dict):
                 return {k: clean_nan(v) for k, v in obj.items()}
@@ -354,10 +264,7 @@ def dataset_dashboard(
         }
 
     except RuntimeError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(400, str(e))
 
     except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to generate dashboard"
-        )
+        raise HTTPException(500, "Dashboard generation failed")
