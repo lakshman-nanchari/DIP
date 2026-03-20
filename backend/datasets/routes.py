@@ -1,6 +1,4 @@
-import os
 import uuid
-import shutil
 
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -8,18 +6,15 @@ from sqlalchemy import select
 
 from core.database import SessionLocal
 from core.dependencies import get_current_user
-from auth.models import User
+from core.supabase_client import supabase
 
+from auth.models import User
 from datasets.models import Dataset
 from datasets.schemas import DatasetResponse
 from datasets.services import load_dataset, dataset_summary, dataset_preview
 
 
 router = APIRouter(prefix="/datasets", tags=["Datasets"])
-
-
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 def get_db():
@@ -30,6 +25,7 @@ def get_db():
         db.close()
 
 
+# UPLOAD DATASET (UPDATED)
 @router.post("/upload", response_model=DatasetResponse)
 async def upload_dataset(
     file: UploadFile = File(...),
@@ -39,8 +35,6 @@ async def upload_dataset(
 ):
 
     filename = dataset_name if dataset_name else file.filename
-
-    # Validate using uploaded file extension
     uploaded_filename = file.filename.lower()
 
     if not uploaded_filename.endswith((".csv", ".xlsx", ".xls")):
@@ -49,23 +43,30 @@ async def upload_dataset(
             detail="Only CSV or Excel files are allowed"
         )
 
-    # Prevent overwrite using UUID
-    unique_name = f"{uuid.uuid4()}_{file.filename}"
-    file_path = os.path.join(UPLOAD_DIR, unique_name)
-
     try:
+        # Read file
+        file_bytes = await file.read()
 
-        # Save file safely
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        # Unique name
+        unique_name = f"{uuid.uuid4()}_{file.filename}"
 
-        df = load_dataset(file_path)
+        # Upload to Supabase bucket "datasets"
+        supabase.storage.from_("datasets").upload(
+            unique_name,
+            file_bytes
+        )
+
+        # Get public URL
+        file_url = supabase.storage.from_("datasets").get_public_url(unique_name)
+
+        # Load dataset from URL
+        df = load_dataset(file_url)
 
         summary = dataset_summary(df)
 
         dataset = Dataset(
             name=filename,
-            file_path=file_path,
+            file_path=file_url,  # store URL
             file_type=uploaded_filename.split(".")[-1],
             uploaded_by=current_user.id,
             rows=summary["rows"],
@@ -78,13 +79,14 @@ async def upload_dataset(
 
         return dataset
 
-    except RuntimeError:
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Dataset processing failed"
+            status_code=500,
+            detail=f"Upload failed: {str(e)}"
         )
 
 
+# PREVIEW DATASET (UPDATED)
 @router.get("/{dataset_id}/preview")
 def preview_dataset(
     dataset_id: int,
@@ -99,15 +101,9 @@ def preview_dataset(
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
 
-    # Check if dataset file exists
-    if not os.path.exists(dataset.file_path):
-        raise HTTPException(status_code=404, detail="Dataset file missing")
-
     try:
         df = load_dataset(dataset.file_path)
-        preview = dataset_preview(df)
-
-        return preview
+        return dataset_preview(df)
 
     except RuntimeError:
         raise HTTPException(
@@ -116,6 +112,7 @@ def preview_dataset(
         )
 
 
+#  LIST DATASETS
 @router.get("/", response_model=list[DatasetResponse])
 def list_datasets(
     db: Session = Depends(get_db),
@@ -129,6 +126,7 @@ def list_datasets(
     return datasets
 
 
+#  GET SINGLE DATASET
 @router.get("/{dataset_id}", response_model=DatasetResponse)
 def get_dataset(
     dataset_id: int,
@@ -150,6 +148,7 @@ def get_dataset(
     return dataset
 
 
+#  DELETE DATASET (UPDATED)
 @router.delete("/{dataset_id}")
 def delete_dataset(
     dataset_id: int,
@@ -169,9 +168,11 @@ def delete_dataset(
         )
 
     try:
+        # Extract file name from URL
+        file_name = dataset.file_path.split("/")[-1]
 
-        if os.path.exists(dataset.file_path):
-            os.remove(dataset.file_path)
+        # Delete from Supabase storage
+        supabase.storage.from_("datasets").remove([file_name])
 
         db.delete(dataset)
         db.commit()
@@ -179,7 +180,6 @@ def delete_dataset(
         return {"message": "Dataset deleted successfully"}
 
     except Exception:
-
         db.rollback()
 
         raise HTTPException(

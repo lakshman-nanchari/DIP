@@ -1,29 +1,39 @@
 import pandas as pd
 import numpy as np
+import requests
+from io import BytesIO
 
 
 def load_dataset(file_path: str):
 
     try:
+        # Handle URL (Supabase storage)
+        if file_path.startswith("http"):
+            response = requests.get(file_path)
+
+            if response.status_code != 200:
+                raise RuntimeError("Failed to fetch dataset")
+
+            file_obj = BytesIO(response.content)
+
+        else:
+            # fallback for local (optional)
+            file_obj = file_path
+
         # LOAD FILE
-
         if file_path.endswith(".csv"):
-
             try:
-                df = pd.read_csv(file_path)
-
+                df = pd.read_csv(file_obj)
             except UnicodeDecodeError:
-                df = pd.read_csv(file_path, encoding="latin1")
+                df = pd.read_csv(file_obj, encoding="latin1")
 
         elif file_path.endswith((".xlsx", ".xls")):
-
-            df = pd.read_excel(file_path, engine="openpyxl")
+            df = pd.read_excel(file_obj, engine="openpyxl")
 
         else:
             raise ValueError("Unsupported file format")
 
         # CLEAN COLUMN NAMES
-
         df.columns = (
             df.columns
             .str.strip()
@@ -31,48 +41,29 @@ def load_dataset(file_path: str):
             .str.replace(" ", "_")
         )
 
-        # CONVERT NUMERIC-LIKE COLUMNS
-
+        # CONVERT NUMERIC
         for col in df.columns:
-
             if df[col].dtype == "object":
-
                 converted = pd.to_numeric(df[col], errors="coerce")
-
-                # Only replace if conversion actually produced numbers
                 if converted.notna().sum() > 0:
                     df[col] = converted
 
-        # DETECT DATETIME COLUMNS
-
+        # DATETIME DETECTION
         for col in df.columns:
-
             if df[col].dtype == "object":
-
                 try:
-                    parsed = pd.to_datetime(
-                        df[col],
-                        errors="coerce",
-                        infer_datetime_format=True
-                    )
-
-                    # Only convert if at least some values were parsed
+                    parsed = pd.to_datetime(df[col], errors="coerce")
                     if parsed.notna().sum() > 0:
                         df[col] = parsed
-
-                except Exception:
+                except:
                     pass
 
-        # REMOVE INFINITE VALUES
-
+        # REMOVE INF
         df = df.replace([np.inf, -np.inf], np.nan)
 
-        # PROTECT AGAINST HUGE DATASETS
-
+        # LIMIT SIZE
         if df.shape[0] > 100000:
             df = df.sample(100000, random_state=42)
-
-        # PROTECT AGAINST TOO MANY COLUMNS
 
         if df.shape[1] > 100:
             df = df.iloc[:, :100]
@@ -84,7 +75,6 @@ def load_dataset(file_path: str):
 
 
 def dataset_summary(df):
-
     return {
         "rows": int(df.shape[0]),
         "columns": int(df.shape[1])
@@ -92,11 +82,8 @@ def dataset_summary(df):
 
 
 def dataset_preview(df, rows: int = 10):
-
     try:
-
         preview = df.head(rows).copy()
-
         preview = preview.replace([np.nan, np.inf, -np.inf], None)
 
         return {
@@ -106,6 +93,4 @@ def dataset_preview(df, rows: int = 10):
         }
 
     except Exception as e:
-        print("DATASET PREVIEW ERROR:", e)
-
         raise RuntimeError("Failed to generate dataset preview") from e
