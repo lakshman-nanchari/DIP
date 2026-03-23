@@ -25,7 +25,7 @@ def get_db():
         db.close()
 
 
-# UPLOAD DATASET (UPDATED)
+#  UPLOAD DATASET (FIXED)
 @router.post("/upload", response_model=DatasetResponse)
 async def upload_dataset(
     file: UploadFile = File(...),
@@ -44,29 +44,39 @@ async def upload_dataset(
         )
 
     try:
-        # Read file
+        #  Read file
         file_bytes = await file.read()
+
+        #  File size validation (10MB)
+        if len(file_bytes) > 10 * 1024 * 1024:
+            raise HTTPException(
+                status_code=400,
+                detail="File too large (max 10MB)"
+            )
 
         # Unique name
         unique_name = f"{uuid.uuid4()}_{file.filename}"
 
-        # Upload to Supabase bucket "datasets"
-        supabase.storage.from_("datasets").upload(
+        #  Upload to Supabase
+        response = supabase.storage.from_("datasets").upload(
             unique_name,
             file_bytes
         )
 
+        #  Check upload success
+        if isinstance(response, dict) and response.get("error"):
+            raise RuntimeError(response["error"])
+
         # Get public URL
         file_url = supabase.storage.from_("datasets").get_public_url(unique_name)
 
-        # Load dataset from URL
+        # Load dataset
         df = load_dataset(file_url)
-
         summary = dataset_summary(df)
 
         dataset = Dataset(
             name=filename,
-            file_path=file_url,  # store URL
+            file_path=file_url,
             file_type=uploaded_filename.split(".")[-1],
             uploaded_by=current_user.id,
             rows=summary["rows"],
@@ -86,7 +96,7 @@ async def upload_dataset(
         )
 
 
-# PREVIEW DATASET (UPDATED)
+#  PREVIEW DATASET
 @router.get("/{dataset_id}/preview")
 def preview_dataset(
     dataset_id: int,
@@ -118,12 +128,9 @@ def list_datasets(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-
-    datasets = db.query(Dataset).filter(
+    return db.query(Dataset).filter(
         Dataset.uploaded_by == current_user.id
     ).all()
-
-    return datasets
 
 
 #  GET SINGLE DATASET
@@ -148,7 +155,7 @@ def get_dataset(
     return dataset
 
 
-#  DELETE DATASET (UPDATED)
+#  DELETE DATASET
 @router.delete("/{dataset_id}")
 def delete_dataset(
     dataset_id: int,
@@ -168,10 +175,8 @@ def delete_dataset(
         )
 
     try:
-        # Extract file name from URL
         file_name = dataset.file_path.split("/")[-1]
 
-        # Delete from Supabase storage
         supabase.storage.from_("datasets").remove([file_name])
 
         db.delete(dataset)

@@ -17,7 +17,6 @@ def load_dataset(file_path: str):
             file_obj = BytesIO(response.content)
 
         else:
-            # fallback for local (optional)
             file_obj = file_path
 
         # LOAD FILE
@@ -61,7 +60,7 @@ def load_dataset(file_path: str):
         # REMOVE INF
         df = df.replace([np.inf, -np.inf], np.nan)
 
-        # LIMIT SIZE
+        # LIMIT SIZE (SAFETY)
         if df.shape[0] > 100000:
             df = df.sample(100000, random_state=42)
 
