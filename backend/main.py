@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from core.database import engine, Base
+from core.database import engine
 from core.dependencies import get_current_user
 from core.permissions import require_role
 from core.exceptions import global_exception_handler
@@ -13,13 +13,19 @@ from datasets.routes import router as dataset_router
 from analytics.routes import router as analytics_router
 
 
-# Lifespan event (replaces deprecated on_event)
+#  Lifespan (SAFE + DEBUG)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    Base.metadata.create_all(bind=engine)
+    try:
+        print("🔌 Connecting to DB...")
+        with engine.connect() as conn:
+            print("✅ DB connected successfully")
+    except Exception as e:
+        print("❌ DB CONNECTION ERROR:", e)
+
+    print("🚀 App startup complete")
     yield
-    # Shutdown (optional cleanup)
+    print("🛑 App shutting down")
 
 
 app = FastAPI(
@@ -32,10 +38,10 @@ app = FastAPI(
 )
 
 
-# CORS configuration
+#  CORS configuration
 origins = [
-    "http://localhost:5173",                  # local development
-    "https://dip-analytics.vercel.app"    # production frontend
+    "http://localhost:5173",
+    "https://dip-analytics.vercel.app"
 ]
 
 app.add_middleware(
@@ -47,31 +53,31 @@ app.add_middleware(
 )
 
 
-# Register routers
+#  Register routers
 app.include_router(user_router)
 app.include_router(dataset_router)
 app.include_router(analytics_router)
 
 
-# Global exception handler
+#  Global exception handler
 @app.exception_handler(Exception)
 async def catch_all_exceptions(request: Request, exc: Exception):
     return global_exception_handler(request, exc)
 
 
-# Root route
+#  Root route
 @app.get("/")
 def root():
     return {"status": "Backend running safely"}
 
 
-# Health check (useful for Render)
+#  Health check (Render friendly)
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
 
 
-# Any authenticated user
+#  Authenticated user
 @app.get("/profile")
 def profile(current_user: User = Depends(get_current_user)):
     return {
@@ -81,7 +87,7 @@ def profile(current_user: User = Depends(get_current_user)):
     }
 
 
-# Admin only
+#  Admin only
 @app.get("/admin")
 def admin_route(current_user: User = Depends(require_role(["admin"]))):
     return {
@@ -90,7 +96,7 @@ def admin_route(current_user: User = Depends(require_role(["admin"]))):
     }
 
 
-# Admin + Analyst
+#  Admin + Analyst
 @app.get("/analytics-access")
 def analytics_route(current_user: User = Depends(require_role(["admin", "analyst"]))):
     return {
@@ -99,7 +105,7 @@ def analytics_route(current_user: User = Depends(require_role(["admin", "analyst
     }
 
 
-# Admin + Analyst + Viewer
+#  Admin + Analyst + Viewer
 @app.get("/dashboard-access")
 def dashboard_route(
     current_user: User = Depends(require_role(["admin", "analyst", "viewer"]))
