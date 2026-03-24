@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -16,40 +16,39 @@ function App() {
 
       <Routes>
 
+        {/* PUBLIC */}
         <Route path="/" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
 
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardHome />
-            </ProtectedRoute>
-          }
-        />
+        {/* 🔥 ALL PROTECTED ROUTES */}
+        <Route element={<ProtectedRoute />}>
 
-        <Route path="/datasets" element={<DatasetsPage />} />
+          <Route path="/dashboard" element={<DashboardHome />} />
 
-        <Route path="/upload-dataset" element={<UploadDatasetPage />} />
+          <Route path="/datasets" element={<DatasetsPage />} />
 
-        <Route
-          path="/analytics/:dataset_id"
-          element={<AnalyticsDashboardPage />}
-        />
+          <Route path="/upload-dataset" element={<UploadDatasetPage />} />
 
-        <Route
-          path="/datasets/:dataset_id/preview"
-          element={<DatasetPreviewPage />}
-        />
+          <Route
+            path="/analytics/:dataset_id"
+            element={<AnalyticsDashboardPage />}
+          />
 
-        <Route
-          path="/analytics/:dataset_id/profile"
-          element={
-            <ProtectedRoute>
-              <DatasetProfilePage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/datasets/:dataset_id/preview"
+            element={<DatasetPreviewPage />}
+          />
+
+          <Route
+            path="/analytics/:dataset_id/profile"
+            element={<DatasetProfilePage />}
+          />
+
+        </Route>
+
+        {/* fallback */}
+        <Route path="*" element={<Navigate to="/" />} />
+
       </Routes>
 
     </BrowserRouter>
