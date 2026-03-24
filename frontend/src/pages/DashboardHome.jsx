@@ -5,6 +5,7 @@ import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import KpiCard from "../components/KpiCard";
 import DashboardSkeleton from "../components/DashboardSkeleton";
+import Breadcrumbs from "../components/Breadcrumbs";
 import API from "../api/axios";
 
 function DashboardHome() {
@@ -73,7 +74,9 @@ function DashboardHome() {
 
         <Navbar />
 
-        <div className="p-8">
+        <div className="p-8 max-w-7xl mx-auto">
+
+          <Breadcrumbs />
 
           <h1 className="text-3xl font-semibold mb-2">
           Dashboard
