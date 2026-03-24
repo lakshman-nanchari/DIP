@@ -560,7 +560,12 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
 
 @lru_cache(maxsize=10)
 def cached_dashboard(df_hash, df_json):
-    df = pd.read_json(df_json, orient="split")
+    try:
+        df = pd.read_json(df_json, orient="split", convert_dates=False)
+    except Exception as e:
+        print("🔥 JSON LOAD ERROR:", str(e))
+        raise RuntimeError(f"Dashboard JSON load failed: {str(e)}")
+
     return generate_dashboard(df)
 
 
