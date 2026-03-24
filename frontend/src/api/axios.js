@@ -1,40 +1,58 @@
 import axios from "axios";
 import NProgress from "nprogress";
 
+let activeRequests = 0;
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL
+  baseURL: import.meta.env.VITE_API_URL,
+  timeout: 15000,
 });
 
-API.interceptors.request.use((config) => {
+// REQUEST INTERCEPTOR
+API.interceptors.request.use(
+  (config) => {
+    activeRequests++;
+    if (activeRequests === 1) NProgress.start();
 
-  NProgress.start();
+    const token = localStorage.getItem("token");
 
-  const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  },
+  (error) => {
+    activeRequests--;
+    if (activeRequests === 0) NProgress.done();
+    return Promise.reject(error);
   }
+);
 
-  return config;
+// RESPONSE INTERCEPTOR
+API.interceptors.response.use(
+  (response) => {
+    activeRequests--;
+    if (activeRequests === 0) NProgress.done();
+    return response;
+  },
+  (error) => {
+    activeRequests--;
+    if (activeRequests === 0) NProgress.done();
 
-}, (error) => {
+    const status = error.response?.status;
 
-  NProgress.done();
-  return Promise.reject(error);
+    // 🔥 HANDLE 401 (important)
+    if (status === 401) {
+      localStorage.removeItem("token");
 
-});
+      if (window.location.pathname !== "/") {
+        window.location.href = "/";
+      }
+    }
 
-
-API.interceptors.response.use((response) => {
-
-  NProgress.done();
-  return response;
-
-}, (error) => {
-
-  NProgress.done();
-  return Promise.reject(error);
-
-});
+    return Promise.reject(error);
+  }
+);
 
 export default API;
