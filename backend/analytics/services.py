@@ -560,7 +560,7 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
 
 @lru_cache(maxsize=10)
 def cached_dashboard(df_hash, df_json):
-    df = pd.read_json(df_json)
+    df = pd.read_json(df_json, orient="split")
     return generate_dashboard(df)
 
 
