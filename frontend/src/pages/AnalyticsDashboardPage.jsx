@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
@@ -9,6 +8,7 @@ import InsightsPanel from "../components/InsightsPanel";
 import ChartComponent from "../components/ChartComponent";
 import AnomalyTable from "../components/AnomalyTable";
 import Loader from "../components/Loader";
+import Breadcrumbs from "../components/Breadcrumbs";
 import API from "../api/axios";
 
 function AnalyticsDashboardPage() {
@@ -22,10 +22,7 @@ function AnalyticsDashboardPage() {
 
   useEffect(() => {
 
-    if (!dataset_id) {
-      navigate("/datasets");
-      return;
-    }
+    if (!dataset_id) return;
 
     fetchDashboard();
 
@@ -56,6 +53,10 @@ function AnalyticsDashboardPage() {
     return <Loader />;
   }
 
+  if (!dashboard) {
+    return <div className="p-8">No dashboard data available</div>;
+  }
+
   return (
 
     <div className="flex min-h-screen text-stone-800 bg-linear-to-br
@@ -70,6 +71,8 @@ function AnalyticsDashboardPage() {
         <Navbar />
 
         <div className="p-8 max-w-7xl mx-auto">
+
+          <Breadcrumbs />
 
           {/* HEADER */}
 
@@ -119,19 +122,22 @@ function AnalyticsDashboardPage() {
 
           <div className="grid md:grid-cols-2 gap-6">
 
-            {Object.entries(dashboard?.charts?.histograms || {}).map(([column, data]) => (
+            {Object.entries(dashboard?.charts?.histograms || {}).map(([column, data]) => {
 
-              <ChartComponent
-                key={column}
-                title={`Histogram: ${column}`}
-                type="bar"
-                data={data.values.slice(0,500).map((v,i)=>({
-                  index:i,
-                  value:v
-                }))}
-              />
+              const values = data?.values || [];
 
-            ))}
+              return (
+                <ChartComponent
+                  key={column}
+                  title={`Histogram: ${column}`}
+                  type="bar"
+                  data={values.slice(0, 500).map((v, i) => ({
+                    index: i,
+                    value: v
+                  }))}
+                />
+              );
+            })}
 
           </div>
 
@@ -144,18 +150,22 @@ function AnalyticsDashboardPage() {
 
           <div className="grid md:grid-cols-2 gap-6">
 
-            {Object.entries(dashboard?.charts?.bars || {}).map(([column, data]) => (
+            {Object.entries(dashboard?.charts?.bars || {}).map(([column, data]) => {
 
-              <ChartComponent
-                key={column}
-                title={`Category: ${column}`}
-                data={data.labels.map((label,i)=>({
-                  index: label,
-                  value: data.values[i]
-                }))}
-              />
+              const labels = data?.labels || [];
+              const values = data?.values || [];
 
-            ))}
+              return (
+                <ChartComponent
+                  key={column}
+                  title={`Category: ${column}`}
+                  data={labels.map((label, i) => ({
+                    index: label,
+                    value: values[i] ?? 0
+                  }))}
+                />
+              );
+            })}
 
           </div>
 
@@ -166,16 +176,20 @@ function AnalyticsDashboardPage() {
             Trend Analysis
           </h2>
 
-          <ChartComponent
-            type="line"
-            title={`Trend: ${dashboard?.charts?.trend?.column}`}
-            data={dashboard?.charts?.trend?.values
-              ?.slice(0,500)
-              .map((v,i)=>({
-                index:i,
-                value:v
-              }))}
-          />
+          {(() => {
+            const trendValues = dashboard?.charts?.trend?.values || [];
+
+            return (
+              <ChartComponent
+                type="line"
+                title={`Trend: ${dashboard?.charts?.trend?.column}`}
+                data={trendValues.slice(0, 500).map((v, i) => ({
+                  index: i,
+                  value: v
+                }))}
+              />
+            );
+          })()}
 
 
           {/* FORECAST */}
@@ -184,14 +198,20 @@ function AnalyticsDashboardPage() {
             Forecast
           </h2>
 
-          <ChartComponent
-            type="line"
-            title="Forecast"
-            data={dashboard?.forecast?.forecast?.map(item => ({
-              index: item.step,
-              value: item.predicted_value
-            }))}
-          />
+          {(() => {
+            const forecastData = dashboard?.forecast?.forecast || [];
+
+            return (
+              <ChartComponent
+                type="line"
+                title="Forecast"
+                data={forecastData.map(item => ({
+                  index: item.step,
+                  value: item.predicted_value
+                }))}
+              />
+            );
+          })()}
 
 
           {/* ANOMALY DETECTION */}
