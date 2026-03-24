@@ -14,6 +14,9 @@ function SignupPage() {
     role:"analyst"
   });
 
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -25,27 +28,36 @@ function SignupPage() {
 
     e.preventDefault();
 
+    setError("");
+    setLoading(true);
+
     try {
 
       await API.post("/users", form);
 
-      alert("Account created");
-
       navigate("/");
 
-    } catch {
-      alert("Signup failed");
+    } catch (err) {
+
+      if (err.response?.status === 400) {
+        setError("Invalid input or user already exists");
+      } else {
+        setError("Signup failed. Please try again.");
+      }
+
+    } finally {
+      setLoading(false);
     }
 
   };
 
   return (
 
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-linear-to-br from-stone-100 via-stone-50 to-stone-200">
 
       {/* LEFT SIDE BRAND */}
 
-      <div className="w-1/2 bg-stone-900 text-white flex flex-col justify-center items-center p-12">
+      <div className="hidden md:flex w-1/2 bg-stone-900 text-white flex flex-col justify-center items-center p-12">
 
         <h1 className="text-4xl font-bold mb-6">
           Data Intelligence
@@ -61,16 +73,22 @@ function SignupPage() {
 
       {/* RIGHT SIDE FORM */}
 
-      <div className="w-1/2 flex items-center justify-center bg-stone-100">
+      <div className="flex w-full md:w-1/2 items-center justify-center">
 
         <form
           onSubmit={handleSignup}
-          className="bg-white border border-stone-200 p-10 rounded-xl shadow-md w-96"
+          className="bg-white/90 backdrop-blur border border-stone-200 p-10 rounded-xl shadow-md w-96"
         >
 
           <h2 className="text-2xl font-bold mb-6 text-stone-800">
             Create Account
           </h2>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded mb-4">
+              {error}
+            </div>
+          )}
 
           <input
             name="full_name"
@@ -101,19 +119,11 @@ function SignupPage() {
             className="w-full mb-4 p-3 border border-stone-300 rounded focus:ring-2 focus:ring-amber-500 outline-none"
           />
 
-          <select
-            name="role"
-            onChange={handleChange}
-            className="w-full mb-6 p-3 border border-stone-300 rounded focus:ring-2 focus:ring-amber-500 outline-none"
-          >
-            <option value="analyst">Analyst</option>
-            <option value="admin">Admin</option>
-          </select>
-
           <button
-            className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded transition"
+            disabled={loading}
+            className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded transition disabled:opacity-50"
           >
-            Sign Up
+            {loading ? "Creating account..." : "Sign Up"}
           </button>
 
           <p className="text-sm text-center mt-4 text-stone-600">

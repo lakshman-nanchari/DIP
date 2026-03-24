@@ -10,11 +10,13 @@ function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setpassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         setError("");
+        setLoading(true);
 
         try {
 
@@ -33,7 +35,15 @@ function LoginPage() {
             navigate("/dashboard");
 
         } catch (err) {
-            setError("Invalid credentials");
+
+            if (err.response?.status === 401) {
+                setError("Invalid credentials");
+            } else {
+                setError("Something went wrong. Please try again.");
+            }
+
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -92,9 +102,10 @@ function LoginPage() {
                         />
 
                         <button
-                            className="w-full bg-amber-600 text-white p-3 rounded hover:bg-amber-700 transition font-medium"
+                            disabled={loading}
+                            className="w-full bg-amber-600 text-white p-3 rounded hover:bg-amber-700 transition font-medium disabled:opacity-50"
                         >
-                            Login
+                            {loading ? "Logging in..." : "Login"}
                         </button>
 
                     </form>
