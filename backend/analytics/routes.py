@@ -63,11 +63,15 @@ def dataset_profile(
     dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
+        print("📂 Loading dataset (profile):", dataset.file_path)
         df = load_dataset(dataset.file_path)
+        print("✅ Dataset loaded (profile):", df.shape)
+
         return generate_profile(df)
 
-    except Exception:
-        raise HTTPException(500, "Failed to analyze dataset")
+    except Exception as e:
+        print("🔥 PROFILE ERROR:", str(e))
+        raise HTTPException(500, f"Profile error: {str(e)}")
 
 
 # INSIGHTS
@@ -81,7 +85,9 @@ def dataset_insights(
     dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
+        print("📂 Loading dataset (insights):", dataset.file_path)
         df = load_dataset(dataset.file_path)
+        print("✅ Dataset loaded (insights):", df.shape)
 
         statistical = generate_insights(df)
         business = generate_business_insights(df)
@@ -94,7 +100,9 @@ def dataset_insights(
         }
 
     except Exception as e:
+        print("🔥 INSIGHTS ERROR:", str(e))
         raise HTTPException(500, f"Insights failed: {str(e)}")
+
 
 # FORECAST
 
@@ -107,7 +115,9 @@ def dataset_forecast(
     dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
+        print("📂 Loading dataset (forecast):", dataset.file_path)
         df = load_dataset(dataset.file_path)
+        print("✅ Dataset loaded (forecast):", df.shape)
 
         return {
             "dataset_id": dataset_id,
@@ -115,6 +125,7 @@ def dataset_forecast(
         }
 
     except RuntimeError as e:
+        print("⚠️ FORECAST ERROR:", str(e))
         raise HTTPException(400, str(e))
 
 
@@ -129,7 +140,10 @@ def clean_dataset_api(
     dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
+        print("📂 Loading dataset (clean):", dataset.file_path)
         df = load_dataset(dataset.file_path)
+        print("✅ Dataset loaded (clean):", df.shape)
+
         cleaned_df, report = clean_dataset(df)
 
         if dataset.file_type == "csv":
@@ -143,6 +157,7 @@ def clean_dataset_api(
         }
 
     except Exception as e:
+        print("🔥 CLEAN ERROR:", str(e))
         raise HTTPException(500, str(e))
 
 
@@ -157,7 +172,9 @@ def dataset_charts(
     dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
+        print("📂 Loading dataset (charts):", dataset.file_path)
         df = load_dataset(dataset.file_path)
+        print("✅ Dataset loaded (charts):", df.shape)
 
         charts = generate_charts(df)
 
@@ -173,6 +190,7 @@ def dataset_charts(
         }
 
     except Exception as e:
+        print("🔥 CHART ERROR:", str(e))
         raise HTTPException(500, f"Chart generation failed: {str(e)}")
 
 
@@ -187,7 +205,9 @@ def dataset_kpis(
     dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
+        print("📂 Loading dataset (kpis):", dataset.file_path)
         df = load_dataset(dataset.file_path)
+        print("✅ Dataset loaded (kpis):", df.shape)
 
         return {
             "dataset_id": dataset_id,
@@ -195,9 +215,11 @@ def dataset_kpis(
         }
 
     except RuntimeError as e:
+        print("⚠️ KPI ERROR:", str(e))
         raise HTTPException(400, str(e))
 
     except Exception as e:
+        print("🔥 KPI ERROR:", str(e))
         raise HTTPException(500, f"KPI failed: {str(e)}")
 
 
@@ -212,7 +234,9 @@ def dataset_anomalies(
     dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
+        print("📂 Loading dataset (anomalies):", dataset.file_path)
         df = load_dataset(dataset.file_path)
+        print("✅ Dataset loaded (anomalies):", df.shape)
 
         return {
             "dataset_id": dataset_id,
@@ -220,10 +244,12 @@ def dataset_anomalies(
         }
 
     except RuntimeError as e:
+        print("⚠️ ANOMALY ERROR:", str(e))
         raise HTTPException(400, str(e))
 
-    except Exception:
-        raise HTTPException(500, "Anomaly detection failed")
+    except Exception as e:
+        print("🔥 ANOMALY ERROR:", str(e))
+        raise HTTPException(500, f"Error: {str(e)}")
 
 
 # DASHBOARD (CACHED)
@@ -237,9 +263,13 @@ def dataset_dashboard(
     dataset = get_user_dataset(dataset_id, db, current_user.id)
 
     try:
+        print("📂 Loading dataset (dashboard):", dataset.file_path)
+
         df = load_dataset(dataset.file_path)
 
-        #  CACHING
+        print("✅ Dataset loaded (dashboard):", df.shape)
+
+        # CACHING
         df_hash = get_df_hash(df)
         df_json = df.to_json(orient="split", date_format="iso")
 
@@ -264,7 +294,9 @@ def dataset_dashboard(
         }
 
     except RuntimeError as e:
+        print("⚠️ DASHBOARD RUNTIME ERROR:", str(e))
         raise HTTPException(400, str(e))
 
-    except Exception:
+    except Exception as e:
+        print("🔥 DASHBOARD ERROR:", str(e))
         raise HTTPException(500, f"Dashboard error: {str(e)}")
