@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import Loader from "../components/Loader";
+import Breadcrumbs from "../components/Breadcrumbs";
 import API from "../api/axios";
 
 function DatasetPreviewPage() {
@@ -17,8 +18,12 @@ function DatasetPreviewPage() {
   const [cleanReport, setCleanReport] = useState(null);
 
   useEffect(() => {
+
+    if (!dataset_id) return;
+
     fetchPreview();
-  }, []);
+
+  }, [dataset_id]);
 
   const fetchPreview = async () => {
 
@@ -76,6 +81,9 @@ function DatasetPreviewPage() {
     );
   }
 
+  const rows = preview?.rows || [];
+  const columns = preview?.columns || [];
+  const dtypes = preview?.dtypes || {};
 
   return (
     <div className="flex bg-stone-100 min-h-screen text-stone-800">
@@ -86,7 +94,9 @@ function DatasetPreviewPage() {
 
         <Navbar />
 
-        <div className="p-8">
+        <div className="p-8 max-w-7xl mx-auto">
+
+          <Breadcrumbs />
 
           <h1 className="text-3xl font-semibold mb-8">
             Dataset Preview
@@ -100,14 +110,14 @@ function DatasetPreviewPage() {
             <div className="bg-white border border-stone-200 p-6 rounded-xl">
               <p className="text-sm text-stone-500">Rows</p>
               <p className="text-2xl font-semibold">
-                {preview.rows.length}
+                {rows.length}
               </p>
             </div>
 
             <div className="bg-white border border-stone-200 p-6 rounded-xl">
               <p className="text-sm text-stone-500">Columns</p>
               <p className="text-2xl font-semibold">
-                {preview.columns.length}
+                {columns.length}
               </p>
             </div>
 
@@ -135,7 +145,7 @@ function DatasetPreviewPage() {
 
               <tbody>
 
-                {preview.columns.map(col => (
+                {columns.map(col => (
 
                   <tr key={col} className="border-b">
 
@@ -144,7 +154,7 @@ function DatasetPreviewPage() {
                     </td>
 
                     <td className="p-3 text-stone-600">
-                      {preview.dtypes[col]}
+                      {dtypes[col]}
                     </td>
 
                   </tr>
@@ -174,7 +184,7 @@ function DatasetPreviewPage() {
 
                   <tr>
 
-                    {preview.columns.map(col => (
+                    {columns.map(col => (
                       <th key={col} className="p-3 border-b text-left">
                         {col}
                       </th>
@@ -186,14 +196,14 @@ function DatasetPreviewPage() {
 
                 <tbody>
 
-                  {preview.rows.slice(0, 20).map((row, index) => (
+                  {rows.slice(0, 20).map((row, index) => (
 
                     <tr key={index} className="border-b">
 
-                      {preview.columns.map(col => (
+                      {columns.map(col => (
 
                         <td key={col} className="p-3 text-stone-700">
-                          {String(row[col])}
+                          {String(row?.[col] ?? "")}
                         </td>
 
                       ))}
@@ -223,14 +233,20 @@ function DatasetPreviewPage() {
             </button>
 
             <button
-              onClick={() => navigate(`/analytics/${dataset_id}`)}
+              onClick={() => {
+                if (!dataset_id) return;
+                navigate(`/analytics/${dataset_id}`);
+              }}
               className="bg-stone-800 text-white px-6 py-3 rounded-lg hover:bg-stone-900 transition"
             >
               Analyze Dataset
             </button> 
 
             <button
-              onClick={() => navigate(`/analytics/${dataset_id}/profile`)}
+              onClick={() => {
+                if (!dataset_id) return;
+                navigate(`/analytics/${dataset_id}/profile`);
+              }}
               className="border border-stone-300 px-6 py-3 rounded-lg hover:bg-stone-50 transition"
             >
               View Profile
