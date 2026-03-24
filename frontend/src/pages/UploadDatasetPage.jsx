@@ -58,80 +58,76 @@ function UploadDatasetPage() {
     }
   };
 
-  return (
-    <div className="flex bg-stone-100 min-h-screen text-stone-800">
+ return (
+  <div className="flex bg-stone-100 min-h-screen text-stone-800">
 
-      <Sidebar />
+    <Sidebar />
 
-      <div className="flex-1">
+    <div className="flex-1">
 
-        <Navbar />
+      <Navbar />
 
-        <div className="p-8">
+      <div className="p-8 max-w-5xl mx-auto">
 
-          <h1 className="text-2xl font-bold mb-6">
-            Upload Dataset
-          </h1>
+        <h1 className="text-3xl font-semibold mb-8">
+          Upload Dataset
+        </h1>
 
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white p-6 rounded shadow w-96 mb-10"
-          >
+        {/* FORM CARD */}
+        <div className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm mb-10">
+
+          <form onSubmit={handleSubmit} className="space-y-4">
 
             <input
               type="text"
               placeholder="Dataset Name"
-              className="w-full border p-3 rounded mb-4"
+              className="w-full border border-stone-300 p-3 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"
               value={datasetName}
               onChange={(e) => setDatasetName(e.target.value)}
             />
 
-            <label className="block mb-4">
-              <span className="text-sm text-gray-600">
-                Select Dataset File
-              </span>
-
-              <input
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                className="block w-full mt-2 border p-2 rounded bg-white"
-                onChange={(e) => setFile(e.target.files[0])}
-              />
-            </label>
+            <input
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              className="w-full border border-stone-300 p-3 rounded-lg bg-white"
+              onChange={(e) => setFile(e.target.files[0])}
+            />
 
             <button
               type="submit"
-              className="w-full bg-indigo-600 text-white p-3 rounded hover:bg-indigo-700"
+              className="w-full bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 transition"
             >
               Upload Dataset
             </button>
 
             {message && (
-              <p className="mt-4 text-sm">{message}</p>
+              <p className="text-sm text-stone-600">{message}</p>
             )}
 
           </form>
 
-          {/* Previous Datasets */}
+        </div>
+
+        {/* DATASETS LIST */}
+        <div>
 
           <h2 className="text-xl font-semibold mb-4">
             Previously Uploaded Datasets
           </h2>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             {datasets.map((dataset) => (
 
               <div
                 key={dataset.id}
-                className="bg-white shadow p-4 rounded"
+                className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm"
               >
-
-                <h3 className="font-semibold">
+                <h3 className="font-semibold text-lg">
                   {dataset.name}
                 </h3>
 
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 mt-2">
                   {dataset.file_type} • {dataset.rows} rows
                 </p>
 
@@ -146,7 +142,9 @@ function UploadDatasetPage() {
       </div>
 
     </div>
-  );
+
+  </div>
+);
 }
 
 export default UploadDatasetPage;
