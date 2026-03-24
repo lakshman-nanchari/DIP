@@ -241,7 +241,7 @@ def dataset_dashboard(
 
         #  CACHING
         df_hash = get_df_hash(df)
-        df_json = df.to_json()
+        df_json = df.to_json(orient="split", date_format="iso")
 
         dashboard = cached_dashboard(df_hash, df_json)
 
@@ -267,4 +267,4 @@ def dataset_dashboard(
         raise HTTPException(400, str(e))
 
     except Exception:
-        raise HTTPException(500, "Dashboard generation failed")
+        raise HTTPException(500, f"Dashboard error: {str(e)}")
