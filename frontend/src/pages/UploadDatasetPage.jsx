@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
+import Breadcrumbs from "../components/Breadcrumbs";
 import API from "../api/axios";
 
 function UploadDatasetPage() {
@@ -9,6 +10,7 @@ function UploadDatasetPage() {
   const [file, setFile] = useState(null);
   const [datasets, setDatasets] = useState([]);
   const [message, setMessage] = useState("");
+  const [fileKey, setFileKey] = useState(Date.now());
 
   useEffect(() => {
     fetchDatasets();
@@ -17,9 +19,10 @@ function UploadDatasetPage() {
   const fetchDatasets = async () => {
     try {
       const res = await API.get("/datasets");
-      setDatasets(res.data);
+      setDatasets(res.data || []);
     } catch (err) {
       console.error(err);
+      setDatasets([]);
     }
   };
 
@@ -43,12 +46,7 @@ function UploadDatasetPage() {
 
       setDatasetName("");
       setFile(null);
-
-      // Reset file input element
-      const fileInput = document.querySelector('input[type="file"]');
-      if (fileInput) {
-        fileInput.value = "";
-      }
+      setFileKey(Date.now());
 
       fetchDatasets();
 
@@ -59,7 +57,10 @@ function UploadDatasetPage() {
   };
 
  return (
-  <div className="flex bg-stone-100 min-h-screen text-stone-800">
+  <div className="flex min-h-screen text-stone-800 bg-linear-to-br
+    from-stone-100
+    via-stone-50
+    to-stone-200">
 
     <Sidebar />
 
@@ -68,6 +69,8 @@ function UploadDatasetPage() {
       <Navbar />
 
       <div className="p-8 max-w-5xl mx-auto">
+
+        <Breadcrumbs />
 
         <h1 className="text-3xl font-semibold mb-8">
           Upload Dataset
@@ -87,6 +90,7 @@ function UploadDatasetPage() {
             />
 
             <input
+              key={fileKey}
               type="file"
               accept=".csv,.xlsx,.xls"
               className="w-full border border-stone-300 p-3 rounded-lg bg-white"
@@ -115,27 +119,37 @@ function UploadDatasetPage() {
             Previously Uploaded Datasets
           </h2>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {datasets.length === 0 ? (
 
-            {datasets.map((dataset) => (
+            <div className="bg-white border border-stone-200 rounded-xl p-6 text-center text-stone-500">
+              No datasets uploaded yet.
+            </div>
 
-              <div
-                key={dataset.id}
-                className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm"
-              >
-                <h3 className="font-semibold text-lg">
-                  {dataset.name}
-                </h3>
+          ) : (
 
-                <p className="text-sm text-gray-500 mt-2">
-                  {dataset.file_type} • {dataset.rows} rows
-                </p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-              </div>
+              {datasets.map((dataset) => (
 
-            ))}
+                <div
+                  key={dataset.id}
+                  className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm"
+                >
+                  <h3 className="font-semibold text-lg">
+                    {dataset.name}
+                  </h3>
 
-          </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {dataset.file_type} • {dataset.rows} rows
+                  </p>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
 
         </div>
 
