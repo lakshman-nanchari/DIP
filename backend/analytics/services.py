@@ -4,7 +4,8 @@ from sklearn.ensemble import IsolationForest
 from functools import lru_cache
 import hashlib
 
-# VALIDATION + CACHING
+
+# VALIDATION + HASH 
 
 def validate_dataframe(df):
     if df is None or df.empty:
@@ -17,7 +18,7 @@ def get_df_hash(df):
     ).hexdigest()
 
 
-# DATASET PROFILE
+#  DATASET PROFILE 
 
 def generate_profile(df: pd.DataFrame):
 
@@ -76,7 +77,7 @@ def generate_profile(df: pd.DataFrame):
     return profile
 
 
-# DATA CLEANING
+#  DATA CLEANING 
 
 def clean_dataset(df):
 
@@ -87,21 +88,20 @@ def clean_dataset(df):
 
     df = df.replace([np.inf, -np.inf], np.nan)
 
-    # Convert numeric-like columns
+    # SAFE NUMERIC CONVERSION
     for col in df.columns:
         if df[col].dtype == "object":
             converted = pd.to_numeric(df[col], errors="coerce")
-            if converted.notnull().sum() > 0:
-                df[col] = converted
 
-    # FIXED datetime parsing
+            if converted.notnull().sum() > len(df) * 0.5:
+                df[col] = converted
+    # SAFE DATETIME CONVERSION
     for col in df.columns:
-        try:
-            parsed = pd.to_datetime(df[col], errors="coerce")
-            if parsed.notna().sum() > 0:
+        if df[col].dtype == "object":
+            parsed = pd.to_datetime(df[col], errors="coerce", dayfirst=True)
+
+            if parsed.notna().sum() > len(df) * 0.6:
                 df[col] = parsed
-        except:
-            pass
 
     before = len(df)
     df = df.drop_duplicates()
@@ -109,7 +109,6 @@ def clean_dataset(df):
 
     filled_values = 0
 
-    # Numeric
     for col in df.select_dtypes(include=["number"]).columns:
         missing = df[col].isnull().sum()
         if missing > 0:
@@ -119,14 +118,12 @@ def clean_dataset(df):
             df[col] = df[col].fillna(median)
             filled_values += int(missing)
 
-    # Categorical
     for col in df.select_dtypes(include=["object"]).columns:
         missing = df[col].isnull().sum()
         if missing > 0:
             df[col] = df[col].fillna("Unknown")
             filled_values += int(missing)
 
-    # Datetime
     for col in df.select_dtypes(include=["datetime"]).columns:
         missing = df[col].isnull().sum()
         if missing > 0:
@@ -139,7 +136,7 @@ def clean_dataset(df):
     return df, report
 
 
-# INSIGHTS GENERATION
+# INSIGHTS 
 
 def generate_insights(df):
 
@@ -159,11 +156,9 @@ def generate_insights(df):
         "columns": int(df.shape[1])
     }
 
-    # Correlation insights
     if len(numeric_df.columns) > 1:
 
         corr_matrix = numeric_df.corr(numeric_only=True)
-
         checked_pairs = set()
 
         for col in corr_matrix.columns:
@@ -173,7 +168,6 @@ def generate_insights(df):
                     continue
 
                 pair = tuple(sorted([col, idx]))
-
                 if pair in checked_pairs:
                     continue
 
@@ -188,7 +182,6 @@ def generate_insights(df):
 
                     checked_pairs.add(pair)
 
-    # Outliers
     for col in numeric_df.columns:
 
         series = pd.to_numeric(numeric_df[col], errors="coerce").dropna()
@@ -205,14 +198,12 @@ def generate_insights(df):
         ]
 
         if len(outliers) > 0:
-
             percentage = (len(outliers) / len(series)) * 100
 
             insights.append(
                 f"{len(outliers)} outliers detected in '{col}' ({round(percentage,1)}% of data)."
             )
 
-    # Averages
     for col in numeric_df.columns[:5]:
         value = numeric_df[col].mean()
         if not pd.isna(value):
@@ -226,41 +217,41 @@ def generate_insights(df):
     }
 
 
-# CHART GENERATION 
+#  CHARTS 
 
 def generate_charts(df):
-
     validate_dataframe(df)
 
     charts = {}
 
+    df = df.copy()
+    df = df.replace([np.inf, -np.inf], np.nan)
+
     numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
 
     categorical_cols = [
-        col for col in df.select_dtypes(include=["object"]).columns
+        col for col in df.select_dtypes(include=["object", "category"]).columns
         if "id" not in col.lower()
     ]
 
     # HISTOGRAMS
     histograms = {}
 
-    for col in numeric_cols[:4]:
-
+    for col in numeric_cols[:5]:
         try:
-            values = pd.to_numeric(df[col], errors="coerce")
-            values = values.replace([np.inf, -np.inf], np.nan).dropna()
-
-            if len(values) > 10000:
-                values = values.sample(10000)
+            values = pd.to_numeric(df[col], errors="coerce").dropna()
 
             if len(values) == 0:
                 continue
 
+            if len(values) > 15000:
+                values = values.sample(15000, random_state=42)
+
             counts, bins = np.histogram(values, bins=10)
 
             histograms[col] = {
-                "labels": [round(b, 2) for b in bins[:-1]],
-                "values": counts.tolist()
+                "labels": [round(float(b), 2) for b in bins[:-1]],
+                "values": counts.astype(int).tolist()
             }
 
         except:
@@ -271,16 +262,18 @@ def generate_charts(df):
     # BAR CHARTS
     bars = {}
 
-    for col in categorical_cols[:3]:
+    for col in categorical_cols[:5]:
         try:
-            counts = df[col].astype(str).value_counts().head(10)
+            values = df[col].astype(str)
 
-            if counts.empty:
+            if values.dropna().empty:
                 continue
+
+            counts = values.value_counts().head(10)
 
             bars[col] = {
                 "labels": counts.index.tolist(),
-                "values": counts.values.tolist()
+                "values": counts.values.astype(int).tolist()
             }
 
         except:
@@ -294,14 +287,13 @@ def generate_charts(df):
             corr = df[numeric_cols].corr(numeric_only=True)
 
             if not corr.empty:
-                charts["correlation_matrix"] = corr.fillna(0).to_dict()
+                charts["correlation_matrix"] = corr.fillna(0).round(3).to_dict()
 
         except:
-            pass
+            charts["correlation_matrix"] = {}
 
-    # TREND
+    # SMART TREND 
     if numeric_cols:
-
         try:
             priority_keywords = ["sales", "revenue", "amount", "price", "profit"]
 
@@ -315,22 +307,21 @@ def generate_charts(df):
             if target is None:
                 target = numeric_cols[0]
 
-            values = pd.to_numeric(df[target], errors="coerce")
-            values = values.replace([np.inf, -np.inf], np.nan).dropna()
+            values = pd.to_numeric(df[target], errors="coerce").dropna()
 
             if not values.empty:
                 charts["trend"] = {
                     "column": target,
-                    "values": values.head(300).tolist()
+                    "values": values.head(500).tolist()
                 }
 
         except:
-            pass
+            charts["trend"] = {}
 
     return charts
 
 
-# KPI GENERATION
+# KPI 
 
 def generate_kpis(df):
 
@@ -362,7 +353,7 @@ def generate_kpis(df):
     return kpis
 
 
-# FORECASTING 
+#FORECAST 
 
 def generate_forecast(df, steps: int = 5):
 
@@ -395,6 +386,10 @@ def generate_forecast(df, steps: int = 5):
     if series.nunique() < 2:
         raise RuntimeError("Forecasting failed: data has no variation")
 
+    
+    if len(series) > 50:
+        series = series.rolling(3).mean().dropna()
+
     trend = np.polyfit(range(len(series)), series, 1)
 
     predictions = []
@@ -414,7 +409,7 @@ def generate_forecast(df, steps: int = 5):
     }
 
 
-# ANOMALY DETECTION 
+# ANOMALIES 
 
 def detect_anomalies(df):
 
@@ -447,7 +442,7 @@ def detect_anomalies(df):
     }
 
 
-# BUSINESS INSIGHTS GENERATION
+# BUSINESS INSIGHTS 
 
 def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
 
@@ -472,7 +467,6 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
         f"({len(numeric_cols)} numeric, {len(categorical_cols)} categorical)."
     )
 
-    # Dominant category
     for col in categorical_cols:
         try:
             value_counts = df[col].value_counts(dropna=True)
@@ -490,7 +484,6 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
         except:
             continue
 
-    # Numeric range
     for col in numeric_cols:
         series = pd.to_numeric(df[col], errors="coerce")
 
@@ -501,7 +494,6 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
             f"'{col}' ranges from {round(series.min(),2)} to {round(series.max(),2)}."
         )
 
-    # High variance
     for col in numeric_cols:
         series = pd.to_numeric(df[col], errors="coerce")
 
@@ -513,7 +505,6 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
                 f"'{col}' shows high variability."
             )
 
-    # Category vs numeric
     for cat in categorical_cols:
         if df[cat].nunique() > 20:
             continue
@@ -534,7 +525,6 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
             except:
                 continue
 
-    # Correlation
     if len(numeric_cols) > 1:
         try:
             corr = df[numeric_cols].corr(numeric_only=True)
@@ -556,15 +546,16 @@ def generate_business_insights(df: pd.DataFrame, max_insights: int = 12):
     return insights[:max_insights]
 
 
-# DASHBOARD (CACHED)
+#  DASHBOARD 
 
 @lru_cache(maxsize=10)
-def cached_dashboard(df_hash, df_json):
-    try:
-        df = pd.read_json(df_json, orient="split", convert_dates=False)
-    except Exception as e:
-        print("🔥 JSON LOAD ERROR:", str(e))
-        raise RuntimeError(f"Dashboard JSON load failed: {str(e)}")
+def cached_dashboard(file_path):
+    from datasets.services import load_dataset
+
+    df = load_dataset(file_path)
+
+    if df.shape[0] > 50000:
+        df = df.sample(50000, random_state=42)
 
     return generate_dashboard(df)
 
