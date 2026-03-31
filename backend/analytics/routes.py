@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 import math
+import os
+import logging
 
 from core.database import SessionLocal
 from core.dependencies import get_current_user
@@ -17,16 +19,24 @@ from analytics.services import (
     clean_dataset,
     generate_charts,
     generate_kpis,
-    generate_dashboard,
     detect_anomalies,
     cached_dashboard,
     get_df_hash
 )
 
+#  LOGGING 
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+logging.basicConfig(level=LOG_LEVEL)
+logger = logging.getLogger(__name__)
+
+#  ROUTER 
+
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
-# DB DEPENDENCY
+# DB 
 
 def get_db():
     db = SessionLocal()
@@ -52,98 +62,91 @@ def get_user_dataset(dataset_id, db, user_id):
     return dataset
 
 
-# PROFILE
+# DATASET CACHE 
 
-@router.get("/{dataset_id}/profile")
-def dataset_profile(
+def get_dataset_df(
     dataset_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    dataset = get_user_dataset(dataset_id, db, current_user.id)
+    try:
+        dataset = get_user_dataset(dataset_id, db, current_user.id)
+
+        logger.info(f"Loading dataset: {dataset.file_path}")
+        df = load_dataset(dataset.file_path)
+        logger.info(f"Dataset loaded: {df.shape}")
+
+        return dataset, df
+
+    except Exception as e:
+        logger.error(f"Dataset load error: {str(e)}")
+        raise HTTPException(500, f"Dataset load error: {str(e)}")
+
+
+# PROFILE 
+
+@router.get("/{dataset_id}/profile")
+def dataset_profile(dataset_data=Depends(get_dataset_df)):
+    dataset, df = dataset_data
 
     try:
-        print("📂 Loading dataset (profile):", dataset.file_path)
-        df = load_dataset(dataset.file_path)
-        print("✅ Dataset loaded (profile):", df.shape)
-
         return generate_profile(df)
 
     except Exception as e:
-        print("🔥 PROFILE ERROR:", str(e))
+        logger.error(f"Profile error: {str(e)}")
         raise HTTPException(500, f"Profile error: {str(e)}")
 
 
-# INSIGHTS
+# INSIGHTS 
 
 @router.get("/{dataset_id}/insights")
-def dataset_insights(
-    dataset_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
-):
-    dataset = get_user_dataset(dataset_id, db, current_user.id)
+def dataset_insights(dataset_data=Depends(get_dataset_df)):
+    dataset, df = dataset_data
 
     try:
-        print("📂 Loading dataset (insights):", dataset.file_path)
-        df = load_dataset(dataset.file_path)
-        print("✅ Dataset loaded (insights):", df.shape)
-
         statistical = generate_insights(df)
         business = generate_business_insights(df)
 
         return {
-            "dataset_id": dataset_id,
+            "dataset_id": dataset.id,
             "summary": statistical.get("summary", {}),
             "statistical_insights": statistical.get("insights", []),
             "business_insights": business
         }
 
     except Exception as e:
-        print("🔥 INSIGHTS ERROR:", str(e))
+        logger.error(f"Insights error: {str(e)}")
         raise HTTPException(500, f"Insights failed: {str(e)}")
 
 
-# FORECAST
+#  FORECAST 
 
 @router.get("/{dataset_id}/forecast")
-def dataset_forecast(
-    dataset_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
-):
-    dataset = get_user_dataset(dataset_id, db, current_user.id)
+def dataset_forecast(dataset_data=Depends(get_dataset_df)):
+    dataset, df = dataset_data
 
     try:
-        print("📂 Loading dataset (forecast):", dataset.file_path)
-        df = load_dataset(dataset.file_path)
-        print("✅ Dataset loaded (forecast):", df.shape)
-
         return {
-            "dataset_id": dataset_id,
+            "dataset_id": dataset.id,
             "forecast": generate_forecast(df)
         }
 
     except RuntimeError as e:
-        print("⚠️ FORECAST ERROR:", str(e))
+        logger.warning(f"Forecast error: {str(e)}")
         raise HTTPException(400, str(e))
 
+    except Exception as e:
+        logger.error(f"Forecast failure: {str(e)}")
+        raise HTTPException(500, f"Forecast error: {str(e)}")
 
-# CLEAN DATASET
+
+#  CLEAN 
 
 @router.post("/{dataset_id}/clean")
-def clean_dataset_api(
-    dataset_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
-):
-    dataset = get_user_dataset(dataset_id, db, current_user.id)
+def clean_dataset_api(dataset_data=Depends(get_dataset_df)):
+    dataset, df = dataset_data
 
     try:
-        print("📂 Loading dataset (clean):", dataset.file_path)
-        df = load_dataset(dataset.file_path)
-        print("✅ Dataset loaded (clean):", df.shape)
-
         cleaned_df, report = clean_dataset(df)
 
         if dataset.file_type == "csv":
@@ -152,130 +155,93 @@ def clean_dataset_api(
             cleaned_df.to_excel(dataset.file_path, index=False)
 
         return {
-            "dataset_id": dataset_id,
+            "dataset_id": dataset.id,
             "cleaning_report": report
         }
 
     except Exception as e:
-        print("🔥 CLEAN ERROR:", str(e))
+        logger.error(f"Cleaning failed: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-# CHARTS
+# CHARTS 
 
 @router.get("/{dataset_id}/charts")
-def dataset_charts(
-    dataset_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
-):
-    dataset = get_user_dataset(dataset_id, db, current_user.id)
+def dataset_charts(dataset_data=Depends(get_dataset_df)):
+    dataset, df = dataset_data
 
     try:
-        print("📂 Loading dataset (charts):", dataset.file_path)
-        df = load_dataset(dataset.file_path)
-        print("✅ Dataset loaded (charts):", df.shape)
-
         charts = generate_charts(df)
 
-        chart_count = sum(
-            len(v) if isinstance(v, dict) else 1
-            for v in charts.values()
+        chart_count = (
+            len(charts.get("histograms", {})) +
+            len(charts.get("bars", {})) +
+            (1 if charts.get("trend") else 0) +
+            (1 if charts.get("correlation_matrix") else 0)
         )
 
         return {
-            "dataset_id": dataset_id,
+            "dataset_id": dataset.id,
             "chart_count": chart_count,
             "charts": charts
         }
 
     except Exception as e:
-        print("🔥 CHART ERROR:", str(e))
+        logger.error(f"Chart error: {str(e)}")
         raise HTTPException(500, f"Chart generation failed: {str(e)}")
 
 
-# KPIs
+# KPIs 
 
 @router.get("/{dataset_id}/kpis")
-def dataset_kpis(
-    dataset_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
-):
-    dataset = get_user_dataset(dataset_id, db, current_user.id)
+def dataset_kpis(dataset_data=Depends(get_dataset_df)):
+    dataset, df = dataset_data
 
     try:
-        print("📂 Loading dataset (kpis):", dataset.file_path)
-        df = load_dataset(dataset.file_path)
-        print("✅ Dataset loaded (kpis):", df.shape)
-
         return {
-            "dataset_id": dataset_id,
+            "dataset_id": dataset.id,
             "kpis": generate_kpis(df)
         }
 
     except RuntimeError as e:
-        print("⚠️ KPI ERROR:", str(e))
+        logger.warning(f"KPI error: {str(e)}")
         raise HTTPException(400, str(e))
 
     except Exception as e:
-        print("🔥 KPI ERROR:", str(e))
+        logger.error(f"KPI failure: {str(e)}")
         raise HTTPException(500, f"KPI failed: {str(e)}")
 
 
-# ANOMALIES
+#ANOMALIES 
 
 @router.get("/{dataset_id}/anomalies")
-def dataset_anomalies(
-    dataset_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
-):
-    dataset = get_user_dataset(dataset_id, db, current_user.id)
+def dataset_anomalies(dataset_data=Depends(get_dataset_df)):
+    dataset, df = dataset_data
 
     try:
-        print("📂 Loading dataset (anomalies):", dataset.file_path)
-        df = load_dataset(dataset.file_path)
-        print("✅ Dataset loaded (anomalies):", df.shape)
-
         return {
-            "dataset_id": dataset_id,
+            "dataset_id": dataset.id,
             "anomaly_analysis": detect_anomalies(df)
         }
 
     except RuntimeError as e:
-        print("⚠️ ANOMALY ERROR:", str(e))
+        logger.warning(f"Anomaly error: {str(e)}")
         raise HTTPException(400, str(e))
 
     except Exception as e:
-        print("🔥 ANOMALY ERROR:", str(e))
+        logger.error(f"Anomaly failure: {str(e)}")
         raise HTTPException(500, f"Error: {str(e)}")
 
 
-# DASHBOARD (CACHED)
+#  DASHBOARD 
 
 @router.get("/{dataset_id}/dashboard")
-def dataset_dashboard(
-    dataset_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
-):
-    dataset = get_user_dataset(dataset_id, db, current_user.id)
+def dataset_dashboard(dataset_data=Depends(get_dataset_df)):
+    dataset, df = dataset_data
 
     try:
-        print("📂 Loading dataset (dashboard):", dataset.file_path)
+        dashboard = cached_dashboard(dataset.file_path)
 
-        df = load_dataset(dataset.file_path)
-
-        print("✅ Dataset loaded (dashboard):", df.shape)
-
-        # CACHING
-        df_hash = get_df_hash(df)
-        df_json = df.to_json(orient="split", date_format="iso")
-
-        dashboard = cached_dashboard(df_hash, df_json)
-
-        # Clean NaN
         def clean_nan(obj):
             if isinstance(obj, dict):
                 return {k: clean_nan(v) for k, v in obj.items()}
@@ -285,18 +251,16 @@ def dataset_dashboard(
                 return None
             return obj
 
-        dashboard = clean_nan(dashboard)
-
         return {
-            "dataset_id": dataset_id,
+            "dataset_id": dataset.id,
             "dataset_name": dataset.name,
-            "dashboard": dashboard
+            "dashboard": clean_nan(dashboard)
         }
 
     except RuntimeError as e:
-        print("⚠️ DASHBOARD RUNTIME ERROR:", str(e))
+        logger.warning(f"Dashboard runtime error: {str(e)}")
         raise HTTPException(400, str(e))
 
     except Exception as e:
-        print("🔥 DASHBOARD ERROR:", str(e))
+        logger.error(f"Dashboard failure: {str(e)}")
         raise HTTPException(500, f"Dashboard error: {str(e)}")
