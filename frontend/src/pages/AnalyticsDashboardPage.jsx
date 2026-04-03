@@ -183,7 +183,7 @@ function AnalyticsDashboardPage() {
               <ChartComponent
                 type="line"
                 title={`Trend: ${dashboard?.charts?.trend?.column}`}
-                data={trendValues.slice(0, 500).map((v, i) => ({
+                data={trendValues.slice(0, 200).map((v, i) => ({
                   index: i,
                   value: v
                 }))}
